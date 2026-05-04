@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
-<title>创作对话工具 v3.1.36</title>
+<title>创作对话工具 v3.1.38</title>
 <style>
-/* 水印避让：右下角，高≈90px，左边界≈距屏幕左160px，键盘弹出时消失 */
-:root{--bg-p:#151513;--bg-s:#1d1d1a;--bg-t:#282824;--tx-p:#e8e3d8;--tx-s:#b6afa2;--tx-m:#777065;--bd:#37362f;--ac:#78bfa6;--ach:#66ad95;--ac-soft:rgba(120,191,166,.14);--ok:#79c58e;--ok-soft:rgba(121,197,142,.16);--wn:#d6a85f;--wn-soft:rgba(214,168,95,.16);--dn:#d9827b;--dn-soft:rgba(217,130,123,.16);--purple:#b68ac8;--purple-soft:rgba(182,138,200,.14);--pink:#d887a8;--pink-soft:rgba(216,135,168,.16);--gold:#d6a85f;--gold-soft:rgba(214,168,95,.16);--indigo:#8d9cc8;--indigo-soft:rgba(141,156,200,.14);--orange:#d69363;--orange-soft:rgba(214,147,99,.16);--code-bg:rgba(0,0,0,.22);--mark-bg:rgba(214,168,95,.32);--ubg:#243a34;--abg:transparent;--ts:16px;--bs:14px;--fs:15px;--safe-t:env(safe-area-inset-top);--safe-b:env(safe-area-inset-bottom);--sw:260px;--r:4px;--wm-b:0px;--wm-left:0px;--mat-accent:#78bfa6}
+
+:root{--bg-p:#151513;--bg-s:#1d1d1a;--bg-t:#282824;--tx-p:#e8e3d8;--tx-s:#b6afa2;--tx-m:#777065;--bd:#37362f;--ac:#78bfa6;--ach:#66ad95;--ac-soft:rgba(120,191,166,.14);--ok:#79c58e;--ok-soft:rgba(121,197,142,.16);--wn:#d6a85f;--wn-soft:rgba(214,168,95,.16);--dn:#d9827b;--dn-soft:rgba(217,130,123,.16);--purple:#b68ac8;--purple-soft:rgba(182,138,200,.14);--pink:#d887a8;--pink-soft:rgba(216,135,168,.16);--gold:#d6a85f;--gold-soft:rgba(214,168,95,.16);--indigo:#8d9cc8;--indigo-soft:rgba(141,156,200,.14);--orange:#d69363;--orange-soft:rgba(214,147,99,.16);--code-bg:rgba(0,0,0,.22);--mark-bg:rgba(214,168,95,.32);--ubg:#243a34;--abg:transparent;--ts:16px;--bs:14px;--fs:15px;--safe-t:env(safe-area-inset-top);--safe-b:env(safe-area-inset-bottom);--sw:260px;--r:4px;--mat-accent:#78bfa6}
 [data-theme=light]{--bg-p:#f6f7f4;--bg-s:#ffffff;--bg-t:#edf1ec;--tx-p:#1f2521;--tx-s:#5a625c;--tx-m:#909891;--bd:#d9dfd8;--ac:#4f9f82;--ach:#448f74;--ac-soft:rgba(79,159,130,.12);--ok:#4f9d68;--ok-soft:rgba(79,157,104,.13);--wn:#b9893e;--wn-soft:rgba(185,137,62,.14);--dn:#c96d67;--dn-soft:rgba(201,109,103,.14);--purple:#9063a3;--purple-soft:rgba(144,99,163,.12);--pink:#bd6688;--pink-soft:rgba(189,102,136,.13);--gold:#b9893e;--gold-soft:rgba(185,137,62,.14);--indigo:#6578ad;--indigo-soft:rgba(101,120,173,.12);--orange:#b97542;--orange-soft:rgba(185,117,66,.14);--code-bg:rgba(0,0,0,.07);--mark-bg:rgba(185,137,62,.25);--ubg:#e2f0eb;--abg:transparent;--mat-accent:#4f9f82}
 [data-theme=sepia]{--bg-p:#f4ecd8;--bg-s:#faf6eb;--bg-t:#e8e0c8;--tx-p:#3d3229;--tx-s:#5d4e37;--tx-m:#8a7a5a;--bd:#d4c8a8;--ac:#9b7a32;--ach:#856828;--ac-soft:rgba(155,122,50,.15);--ok:#6f8f45;--ok-soft:rgba(111,143,69,.15);--wn:#b8860b;--wn-soft:rgba(184,134,11,.16);--dn:#b76654;--dn-soft:rgba(183,102,84,.15);--purple:#8d6a93;--purple-soft:rgba(141,106,147,.14);--pink:#b66f82;--pink-soft:rgba(182,111,130,.15);--gold:#b8860b;--gold-soft:rgba(184,134,11,.16);--indigo:#6f759c;--indigo-soft:rgba(111,117,156,.13);--orange:#b9783f;--orange-soft:rgba(185,120,63,.15);--code-bg:rgba(61,50,41,.08);--mark-bg:rgba(184,134,11,.25);--ubg:#ede4c8;--abg:transparent;--mat-accent:#7f8f45}
 
@@ -456,7 +456,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;f
 @keyframes mat-hl{0%{outline:2px solid var(--ac)}50%{outline:2px solid transparent}100%{outline:2px solid var(--ac)}}
 .mat-hl{animation:mat-hl .5s ease 3;outline-offset:0}
 /* ===== 素材编辑器CSS(旧) ===== */
-.mat-app{display:none;background:var(--bg-p);color:var(--tx-p);overflow-y:auto;height:100%;overscroll-behavior-x:none;touch-action:pan-y;padding-bottom:calc(var(--wm-b) + 20px)}
+.mat-app{display:none;background:var(--bg-p);color:var(--tx-p);overflow-y:auto;height:100%;overscroll-behavior-x:none;touch-action:pan-y;padding-bottom:20px}
 .mat-section{background:var(--bg-s);border-radius:var(--r);padding:12px;margin-bottom:10px;border:1px solid var(--bd)}
 .mat-section-title{font-size:var(--bs);font-weight:bold;color:var(--mat-accent);margin-bottom:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .mat-section-title .btn-group{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
@@ -537,7 +537,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;f
 .dragging{opacity:0.5;background:var(--ac)!important}
 .drag-over{box-shadow:0 -3px 0 0 var(--mat-accent) inset}
 @media(max-width:768px){
-:root{--ts:15px;--bs:13px;--wm-b:90px;--wm-left:160px}
+:root{--ts:15px;--bs:13px}
 .toolbar{padding:4px 10px;padding-top:calc(4px + var(--safe-t));gap:6px}.toolbar-title{flex:1}.menu-btn{display:block}.dk{display:none!important}.mob-btns{display:block!important}.resize-h{display:none}.tb{padding:5px 10px}
 .sidebar{position:fixed;left:0;top:0;bottom:0;width:75vw;max-width:300px;z-index:100;transform:translateX(-100%);transition:transform .3s ease;padding-top:var(--safe-t);min-width:auto}.sidebar.open{transform:translateX(0)}
 .main-c{flex-direction:column}.chat-area{width:100%}
@@ -571,7 +571,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;f
 .mo{padding:0}.mo-box,.mo-box.wide,.mo-box.full{max-width:100%;max-height:100%;height:100%;border-radius:0}
 .mo-box.compact{max-width:90vw;max-height:60vh;height:auto;border-radius:var(--r)}
 .mo-hdr{padding-top:calc(10px + var(--safe-t))}.mo-box.compact .mo-hdr{padding-top:10px}
-.mo-ftr{padding-bottom:calc(var(--wm-b) + var(--safe-b));justify-content:flex-start}.mo-box.compact .mo-ftr{padding-bottom:8px}
+.mo-ftr{padding-bottom:calc(10px + var(--safe-b));justify-content:flex-start}.mo-box.compact .mo-ftr{padding-bottom:8px}
 .mo-btn{padding:8px 16px;font-size:13px;min-height:42px}.mo-box.compact .mo-btn{padding:6px 14px;min-height:auto}
 .edit-mo .mo-ftr .mo-btn{padding:4px 10px;font-size:12px;min-height:auto}
 .fg input,.fg textarea,.fg select{font-size:16px;padding:8px 10px}
@@ -586,7 +586,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;f
 .mat-char-hdr .char-acts .bbn,.mat-exp-hdr .exp-acts .bbn{padding:4px 6px;font-size:11px}
 .mat-bottom{max-width:140px}
 /* 素材编辑器手机端(旧) */
-.mat-app{padding-bottom:calc(var(--wm-b) + 20px)}
+.mat-app{padding-bottom:20px}
 .mat-section{padding:10px}
 #charTree,#editAppList,#editMetaPromptList{max-height:calc(100vh - 160px);overflow-y:auto;-webkit-overflow-scrolling:touch}
 .tree-char-header{padding:8px 10px;gap:6px;font-size:calc(var(--fs) - 1px)}
@@ -625,7 +625,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;f
 .api-panel-batch{margin-top:2px;padding:6px 8px;background:var(--bg-t);border:1px solid var(--bd);border-radius:var(--r)}
 @media(max-width:768px){
 .mo-ftr{padding-bottom:calc(10px + var(--safe-b))!important;justify-content:flex-start}
-.mo-ftr .wm-avoid{margin-right:calc(100vw - var(--wm-left) + 6px)}
+
 .mo-box.compact .mo-ftr{padding-bottom:8px!important}
 .api-panel-top{top:0;margin-top:-4px;padding-bottom:6px}
 .api-panel-actions{gap:4px}
@@ -662,6 +662,10 @@ html,body{overflow-x:hidden;max-width:100vw}
 /*== 费用统计 ==*/
 .cost-lnk{cursor:pointer;color:var(--wn);padding:1px 4px;border-radius:2px;white-space:nowrap;font-size:inherit}
 .cost-lnk:hover{background:var(--wn-soft)}
+
+/*== 只读模式 ==*/
+.read-only-mode .new-btn,.read-only-mode .sb2.pri,.read-only-mode .mo-btn.pri,.read-only-mode .tb.pri{filter:grayscale(.6);opacity:.7}
+.read-only-mode #fldSt{font-weight:600}
 </style>
 </head>
 <body>
@@ -745,14 +749,14 @@ html,body{overflow-x:hidden;max-width:100vw}
 </div></div></div>
 <!-- 素材编辑器 -->
 <div class="mat-app" id="matApp"></div>
-<div class="version">v3.1.36</div>
+<div class="version">v3.1.38</div>
 <div class="mo" id="modal"><div class="mo-box" id="moBox"><div class="mo-hdr"><h3 id="moTitle"></h3><button class="mo-cls" onclick="moClose()">×</button></div><div class="mo-body" id="moBody"></div><div class="mo-ftr" id="moFtr"></div></div></div>
 <div class="ctx" id="ctxMenu"></div>
 <div class="ctx" id="convMenu"></div>
 <div class="ctx" id="grpMenu"></div>
 <script>
 // ==================== 公共区 ====================
-const VER='3.1.36',RSN_F=['reasoning_content','reasoning','thinking','thought','inner_monologue'];
+const VER='3.1.38',RSN_F=['reasoning_content','reasoning','thinking','thought','inner_monologue'];
 let materials={chars:{},charOrder:[],rels:{},relIndex:[],apps:{},appOrder:[],appGroups:{},groupOrder:[],metaPrompts:{},metaOrder:[],appKeywords:{},_sourceFile:'',_importedAt:'',_savedAt:''};
 let storyData={timelineYears:[],stories:[]},tlPointsChat=[];
 let localMeta={},folderH=null,isMobile=false,kbOn=false;
@@ -782,6 +786,8 @@ let ctxStat={total:0,included:0,startIdx:null,endIdx:null,prevIdx:null,matTok:0,
 let _wsSwipeOpenId=null,_wsSwipeMoved=false;
 let _folderIDB=null;
 let inputAttachments=[];
+const INSTANCE_ID='win_'+gid2();
+let writeLocked=false,_lockTimer=null,_lockKey=null;
 let priceTable={};
 let costLogs=[];
 let costSettings={enabled:true,monthlyBudget:500,warnMonthRatio:0.9,warnReqCost:2,warnTokenInput:100000,warnTokenCost:1,defaultOutputTok:3000,requireConfirmNoPrice:false};
@@ -915,6 +921,7 @@ txt.split(/={3,}/).forEach(b=>{b=b.trim();if(!b)return;let m;if(m=b.match(/【�
 
 //== saveMats ==//
 async function saveMats(){
+if(isWriteBlocked('素材保存'))return;
 materials._savedAt=new Date().toISOString();
 try{localStorage.setItem('matCache',JSON.stringify(materials))}catch(e){}
 if(!folderH)return;
@@ -954,7 +961,7 @@ function loadStoryDataChat(){try{const d=localStorage.getItem('sharedStoryData')
 async function loadStoryFile(){if(!folderH)return false;try{const f=await folderH.getFileHandle('stories.json');const d=JSON.parse(await(await f.getFile()).text());if(d.stories){storyData=d;buildTLPoints();return true}}catch(e){}return false}
 
 //== saveStoryFile ==//
-async function saveStoryFile(){if(!folderH)return;try{const f=await folderH.getFileHandle('stories.json',{create:true});const w=await f.createWritable();await w.write(JSON.stringify(storyData,null,2));await w.close()}catch(e){toast('⚠️ 剧情保存失败: '+e.name)}}
+async function saveStoryFile(){if(isWriteBlocked('剧情保存'))return;if(!folderH)return;try{const f=await folderH.getFileHandle('stories.json',{create:true});const w=await f.createWritable();await w.write(JSON.stringify(storyData,null,2));await w.close()}catch(e){toast('⚠️ 剧情保存失败: '+e.name)}}
 
 //== importStoriesJson ==//
 function importStoriesJson(){const inp=document.createElement('input');inp.type='file';inp.accept='.json';inp.onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const d=JSON.parse(await f.text());if(!d.stories&&!d.timelineYears){toast('无效的故事数据');return}storyData=d;buildTLPoints();if(folderH)await saveStoryFile();toast('✓ 剧情数据已导入 ('+storyData.stories.length+'篇)');if(typeof updateMatB==='function')updateMatB();if(isMobile&&typeof closeSB==='function')closeSB()}catch(err){toast('导入失败: '+err.message)}};inp.click()}
@@ -1164,7 +1171,7 @@ function loadLocal(){try{const d=JSON.parse(localStorage.getItem('chatTool24')||
 function saveLocal(){try{localStorage.setItem('chatTool24',JSON.stringify({apiConfigs,curApiId,curModel,expandedApis,starredModels,groups,params,uiSettings,shortcuts,quickPhrases,workspace,priceTable,costSettings}))}catch(e){}}
 
 //== saveCfg ==//
-async function saveCfg(){saveLocal();if(!folderH)return;try{const f=await folderH.getFileHandle('config.json',{create:true});const w=await f.createWritable();await w.write(JSON.stringify({version:VER,apiConfigs,curApiId,curModel,starredModels,groups,params,uiSettings,shortcuts,quickPhrases,workspace,priceTable,costSettings},null,2));await w.close()}catch(e){toast('⚠️ 配置保存失败: '+e.name+': '+(e.message||'').substring(0,40))}}
+async function saveCfg(){saveLocal();if(isWriteBlocked('配置保存'))return;if(!folderH)return;try{const f=await folderH.getFileHandle('config.json',{create:true});const w=await f.createWritable();await w.write(JSON.stringify({version:VER,apiConfigs,curApiId,curModel,starredModels,groups,params,uiSettings,shortcuts,quickPhrases,workspace,priceTable,costSettings},null,2));await w.close()}catch(e){toast('⚠️ 配置保存失败: '+e.name+': '+(e.message||'').substring(0,40))}}
 
 //== loadCfgFile ==//
 async function loadCfgFile(){if(!folderH)return false;try{const f=await folderH.getFileHandle('config.json');const c=JSON.parse(await(await f.getFile()).text());if(c.apiConfigs)apiConfigs=c.apiConfigs;if(c.curApiId!==undefined)curApiId=c.curApiId;if(c.curModel!==undefined)curModel=c.curModel;if(c.starredModels)starredModels=c.starredModels;if(c.groups?.length)groups=c.groups;else groups=[{id:'_default',name:'默认',order:0,color:null,collapsed:false}];if(c.params){params={...params,...c.params};if(!params.contentTags||!params.contentTags.length)params.contentTags=['think','thinking'];if(params.parseContentTags===undefined)params.parseContentTags=true}if(c.uiSettings)uiSettings={...uiSettings,...c.uiSettings};if(c.localMeta)localMeta=c.localMeta;if(c.shortcuts)shortcuts={...shortcuts,...c.shortcuts};if(c.quickPhrases)quickPhrases=c.quickPhrases;if(c.priceTable)priceTable=c.priceTable;if(c.costSettings)costSettings={...costSettings,...c.costSettings};if(c.workspace)workspace={items:[],autoHours:6,activeHours:24,lastCleanAt:0,...c.workspace};if(!workspace.items)workspace.items=[];saveLocal();return true}catch(e){return false}}
@@ -1185,6 +1192,68 @@ document.documentElement.style.setProperty('--sw',(uiSettings.sidebarWidth||260)
 //== updateFolderUI ==//
 function updateFolderUI(){const name=folderH?folderH.name:null;const st=document.getElementById('fldSt');st.textContent=name?'📁 '+name:'未连接';st.classList.toggle('on',!!name);const mb=document.getElementById('fldBtnM');if(mb){mb.textContent=name?'📁'+name:'📁 文件夹';mb.classList.toggle('fld-ok',!!name)}}
 
+//== getFolderLockKey ==//
+function getFolderLockKey(){return folderH?'chatToolLock_'+folderH.name:null}
+
+//== startWorkspaceLock ==//
+function startWorkspaceLock(){
+stopWorkspaceLock(false);
+if(!folderH)return true;
+_lockKey=getFolderLockKey();
+const now=Date.now();
+let cur=null;
+try{cur=JSON.parse(localStorage.getItem(_lockKey)||'null')}catch(e){}
+if(cur&&cur.id!==INSTANCE_ID&&now-(cur.t||0)<8000){
+setReadOnlyMode(true,cur);
+return false
+}
+setReadOnlyMode(false);
+touchWorkspaceLock();
+_lockTimer=setInterval(touchWorkspaceLock,2000);
+return true
+}
+
+//== touchWorkspaceLock ==//
+function touchWorkspaceLock(){
+if(!_lockKey||writeLocked)return;
+try{
+const now=Date.now();
+let cur=null;
+try{cur=JSON.parse(localStorage.getItem(_lockKey)||'null')}catch(e){}
+if(cur&&cur.id!==INSTANCE_ID&&now-(cur.t||0)<8000){
+setReadOnlyMode(true,cur);
+stopWorkspaceLock(false);
+return
+}
+localStorage.setItem(_lockKey,JSON.stringify({id:INSTANCE_ID,t:now,folder:folderH?.name||'',url:location.href}))
+}catch(e){}
+}
+
+//== stopWorkspaceLock ==//
+function stopWorkspaceLock(clear){
+if(_lockTimer){clearInterval(_lockTimer);_lockTimer=null}
+if(clear&&_lockKey){try{const cur=JSON.parse(localStorage.getItem(_lockKey)||'null');if(cur?.id===INSTANCE_ID)localStorage.removeItem(_lockKey)}catch(e){}}
+}
+
+//== setReadOnlyMode ==//
+function setReadOnlyMode(v,info){
+writeLocked=v;
+document.body.classList.toggle('read-only-mode',v);
+const st=document.getElementById('fldSt');
+if(st&&folderH){
+if(v){st.textContent='🔒 只读：另一个窗口正在使用 '+folderH.name;st.style.color='var(--dn)';st.title='为避免数据丢失，本窗口禁止写入。请关闭其他窗口后刷新或重新选择文件夹。'}
+else{st.style.color='';st.title='';updateFolderUI()}
+}
+if(v)toast('⚠️ 检测到同一文件夹已在另一个窗口打开，本窗口进入只读模式')
+}
+
+//== isWriteBlocked ==//
+function isWriteBlocked(action){
+if(!writeLocked)return false;
+toast('🔒 只读模式：检测到同一文件夹已在其他窗口打开，已阻止'+(action||'写入'));
+return true
+}
+
 //== initFolderIDB ==//
 function initFolderIDB(){return new Promise(resolve=>{try{const req=indexedDB.open('ChatToolFolderDB',1);req.onupgradeneeded=e=>{e.target.result.createObjectStore('handles')};req.onsuccess=e=>{_folderIDB=e.target.result;resolve()};req.onerror=()=>resolve()}catch(e){resolve()}})}
 
@@ -1195,13 +1264,15 @@ function saveFolderHandleIDB(handle){if(!_folderIDB)return;try{const tx=_folderI
 function loadFolderHandleIDB(){return new Promise(resolve=>{if(!_folderIDB){resolve(null);return}try{const tx=_folderIDB.transaction('handles','readonly');const req=tx.objectStore('handles').get('folderH');req.onsuccess=()=>resolve(req.result||null);req.onerror=()=>resolve(null)}catch(e){resolve(null)}})}
 
 //== tryRestoreFolder ==//
-async function tryRestoreFolder(){const h=await loadFolderHandleIDB();if(!h)return;try{const perm=await h.queryPermission({mode:'readwrite'});if(perm==='granted'){folderH=h;_dirHandleCache={};const hasCfg=await loadCfgFile();if(!hasCfg)groups=[{id:'_default',name:'默认',order:0,color:null,collapsed:false}];await loadFolder();if(!hasCfg)await saveCfg();updateFolderUI();applyUI();renderApiSel();return}const st=document.getElementById('fldSt');const mb=document.getElementById('fldBtnM');st.textContent='⚠️ 点击恢复 ('+h.name+')';st.classList.add('on');st.style.color='var(--wn)';st.style.cursor='pointer';st.onclick=async function(){try{const p2=await h.requestPermission({mode:'readwrite'});if(p2==='granted'){folderH=h;_dirHandleCache={};const hasCfg=await loadCfgFile();if(!hasCfg)groups=[{id:'_default',name:'默认',order:0,color:null,collapsed:false}];await loadFolder();if(!hasCfg)await saveCfg();updateFolderUI();applyUI();renderApiSel();toast('✓ 已恢复');st.onclick=null;st.style.cursor='';st.style.color=''}else toast('⚠️ 授权被拒绝')}catch(e){toast('⚠️ 授权失败')}};if(mb){mb.textContent='🔑 恢复 '+h.name;mb.classList.add('fld-ok');mb.onclick=st.onclick}}catch(e){}}
+async function tryRestoreFolder(){const h=await loadFolderHandleIDB();if(!h)return;try{const perm=await h.queryPermission({mode:'readwrite'});if(perm==='granted'){folderH=h;_dirHandleCache={};const hasCfg=await loadCfgFile();if(!hasCfg)groups=[{id:'_default',name:'默认',order:0,color:null,collapsed:false}];await loadFolder();if(!hasCfg)await saveCfg();updateFolderUI();startWorkspaceLock();applyUI();renderApiSel();return}const st=document.getElementById('fldSt');const mb=document.getElementById('fldBtnM');st.textContent='⚠️ 点击恢复 ('+h.name+')';st.classList.add('on');st.style.color='var(--wn)';st.style.cursor='pointer';st.onclick=async function(){try{const p2=await h.requestPermission({mode:'readwrite'});if(p2==='granted'){folderH=h;_dirHandleCache={};const hasCfg=await loadCfgFile();if(!hasCfg)groups=[{id:'_default',name:'默认',order:0,color:null,collapsed:false}];await loadFolder();if(!hasCfg)await saveCfg();updateFolderUI();startWorkspaceLock();applyUI();renderApiSel();toast(writeLocked?'⚠️ 已恢复但处于只读模式':'✓ 已恢复');st.onclick=null;st.style.cursor='';st.style.color=''}else toast('⚠️ 授权被拒绝')}catch(e){toast('⚠️ 授权失败')}};if(mb){mb.textContent='🔑 恢复 '+h.name;mb.classList.add('fld-ok');mb.onclick=st.onclick}}catch(e){}}
 
 //== setupViewport ==//
-function setupViewport(){if(!window.visualViewport)return;const app=document.querySelector('.app');const modal=document.getElementById('modal');let pending=false;window.visualViewport.addEventListener('resize',()=>{if(pending)return;pending=true;requestAnimationFrame(()=>{pending=false;const ae=document.activeElement;const wasInput=ae&&ae.id==='userIn';const vh=window.visualViewport.height;const wh=window.innerHeight;if(vh<wh*0.85){kbOn=true;app.style.height=vh+'px';modal.style.height=vh+'px';modal.style.alignItems='flex-start';modal.style.paddingTop='0';document.documentElement.style.setProperty('--wm-b','0px');window.scrollTo(0,0)}else{kbOn=false;app.style.height='';modal.style.height='';modal.style.alignItems='';modal.style.paddingTop='';if(isMobile)document.documentElement.style.setProperty('--wm-b','90px')}const ta=document.getElementById('userIn');if(ta)autoRsz(ta);if(wasInput&&document.activeElement!==ae){try{ae.focus()}catch(e){}}})});window.visualViewport.addEventListener('scroll',()=>{window.scrollTo(0,0)})}
+function setupViewport(){if(!window.visualViewport)return;const app=document.querySelector('.app');const modal=document.getElementById('modal');let pending=false;window.visualViewport.addEventListener('resize',()=>{if(pending)return;pending=true;requestAnimationFrame(()=>{pending=false;const ae=document.activeElement;const wasInput=ae&&ae.id==='userIn';const vh=window.visualViewport.height;const wh=window.innerHeight;if(vh<wh*0.85){kbOn=true;app.style.height=vh+'px';modal.style.height=vh+'px';modal.style.alignItems='flex-start';modal.style.paddingTop='0';window.scrollTo(0,0)}else{kbOn=false;app.style.height='';modal.style.height='';modal.style.alignItems='';modal.style.paddingTop='';}const ta=document.getElementById('userIn');if(ta)autoRsz(ta);if(wasInput&&document.activeElement!==ae){try{ae.focus()}catch(e){}}})});window.visualViewport.addEventListener('scroll',()=>{window.scrollTo(0,0)})}
 
 //== setupBeforeUnload ==//
-function setupBeforeUnload(){window.addEventListener('beforeunload',()=>{saveSession();saveStreamingState()});document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'){saveSession();saveStreamingState()}})}
+function setupBeforeUnload(){window.addEventListener('beforeunload',()=>{saveSession();saveStreamingState()});document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'){saveSession();saveStreamingState()}})
+window.addEventListener('pagehide',()=>stopWorkspaceLock(true));
+window.addEventListener('storage',e=>{if(_lockKey&&e.key===_lockKey&&folderH){try{const cur=JSON.parse(e.newValue||'null');if(cur&&cur.id!==INSTANCE_ID&&Date.now()-(cur.t||0)<8000)setReadOnlyMode(true,cur)}catch(err){}}});}
 
 //== saveStreamingState ==//
 async function saveStreamingState(){for(const[cid,reqs]of Object.entries(pendReqs)){for(const req of reqs){if(req.status!=='generating'||!req.content)continue;const conv=cid===curConvId&&curConv?curConv:await loadConvFull(cid);if(!conv)continue;const msg=conv.messages.find(m=>m.id===req.msgId);if(msg){msg.content=req.content;if(req.reasoning){msg.reasoning=req.reasoning;msg.reasoningDuration=req.reasoningStart?((req.reasoningEnd||Date.now())-req.reasoningStart):0}if(req.firstTokenTime)msg.firstTokenMs=req.firstTokenTime-req.startTime;conv.updatedAt=new Date().toISOString();await saveConvF(conv)}}}}
@@ -1231,7 +1302,7 @@ function getLastId(){try{const o=JSON.parse(sessionStorage.getItem('cs')||'{}');
 function getSavedScroll(id){try{const o=JSON.parse(sessionStorage.getItem('cs')||'{}');return o['sp_'+id]??null}catch(e){return null}}
 
 //== getWmB ==//
-function getWmB(){return parseInt(getComputedStyle(document.documentElement).getPropertyValue('--wm-b'))||0}
+function getWmB(){return 0}
 
 //== showCtxAt ==//
 function showCtxAt(x,y,id,items){const m=document.getElementById(id);m.innerHTML=items;m.style.left=x+'px';m.style.top=y+'px';m.classList.add('show');requestAnimationFrame(()=>{const r=m.getBoundingClientRect();const wmB=getWmB();if(r.right>window.innerWidth)m.style.left=Math.max(10,window.innerWidth-r.width-10)+'px';if(r.bottom>window.innerHeight-wmB-10)m.style.top=Math.max(10,window.innerHeight-r.height-wmB-10)+'px'})}
@@ -1364,7 +1435,7 @@ async function loadIndex(){if(!folderH)return false;try{const cd=await folderH.g
 async function rebuildIndex(){if(!folderH){toast('请先选择文件夹');return}showMo('🔄 重建索引',`<div style="text-align:center;padding:20px"><div id="riStatus">扫描中...</div><div class="prog-bar"><div class="prog-fill" id="riProgFill" style="width:0%"></div></div><div class="prog-text" id="riProgText">0%</div></div>`,'');await new Promise(r=>setTimeout(r,30));convList=[];trashList=[];const cd=await folderH.getDirectoryHandle('conversations',{create:true});const dirEntries=[];for await(const en of cd.values()){if(en.kind!=='directory'||en.name==='_trash')continue;const dir=await cd.getDirectoryHandle(en.name);const files=[];for await(const fe of dir.values()){if(fe.kind==='file'&&fe.name.endsWith('.json')&&fe.name!=='_index.json')files.push(fe)}dirEntries.push({name:en.name,dir,files})}const totalFiles=dirEntries.reduce((s,d)=>s+d.files.length,0);let loadedFiles=0;for(const de of dirEntries){const dn=de.name;let gid=dn==='_default'?'_default':(groups.find(g=>g.id!=='_default'&&getGrpDir(g.id)===dn)?.id||'_default');for(const fe of de.files){try{const d=JSON.parse(await(await fe.getFile()).text());let finalGid=d.groupId||gid;if(finalGid!=='_default'&&!groups.find(g=>g.id===finalGid))finalGid=gid;convList.push({id:d.id,name:d.name||'?',pinned:d.pinned||false,order:d.order??999,msgCount:d.messages?.length||0,updatedAt:d.updatedAt,groupId:finalGid,_fn:fe.name,_dir:dn})}catch(e){}loadedFiles++;if(loadedFiles%5===0||loadedFiles===totalFiles){const s=document.getElementById('riStatus'),f=document.getElementById('riProgFill'),t=document.getElementById('riProgText');if(s)s.textContent=`${loadedFiles}/${totalFiles}`;if(f)f.style.width=Math.round(loadedFiles/Math.max(totalFiles,1)*100)+'%';if(t)t.textContent=Math.round(loadedFiles/Math.max(totalFiles,1)*100)+'%';await new Promise(r=>setTimeout(r,0))}}}try{const td=await folderH.getDirectoryHandle('_trash',{create:true});for await(const en of td.values()){if(en.kind==='file'&&en.name.endsWith('.json')){try{const d=JSON.parse(await(await en.getFile()).text());trashList.push({id:d.id,name:d.name||'?',msgCount:d.messages?.length||0,deletedAt:d.deletedAt,_fn:en.name})}catch(e){}}}}catch(e){}sortConvList();await saveIndex();renderConvList();hideMo();ok(`索引已重建 (${convList.length}个对话)`)}
 
 //== selectFolder ==//
-async function selectFolder(){try{folderH=await window.showDirectoryPicker({mode:'readwrite'});saveFolderHandleIDB(folderH);_dirHandleCache={};const hasCfg=await loadCfgFile();if(!hasCfg){groups=[{id:'_default',name:'默认',order:0,color:null,collapsed:false}]}await loadFolder();if(!hasCfg)await saveCfg();updateFolderUI();applyUI();renderApiSel();toast('✓ 已连接');if(isMobile)closeSB()}catch(e){if(e.name!=='AbortError')toast('❌ 选择文件夹失败: '+e.name+': '+(e.message||'').substring(0,60))}}
+async function selectFolder(){try{folderH=await window.showDirectoryPicker({mode:'readwrite'});saveFolderHandleIDB(folderH);_dirHandleCache={};const hasCfg=await loadCfgFile();if(!hasCfg){groups=[{id:'_default',name:'默认',order:0,color:null,collapsed:false}]}await loadFolder();if(!hasCfg)await saveCfg();updateFolderUI();startWorkspaceLock();applyUI();renderApiSel();toast(writeLocked?'⚠️ 已连接但处于只读模式':'✓ 已连接');if(isMobile)closeSB()}catch(e){if(e.name!=='AbortError')toast('❌ 选择文件夹失败: '+e.name+': '+(e.message||'').substring(0,60))}}
 
 //== loadFolder ==//
 async function loadFolder(){if(!folderH)return;_dirHandleCache={};
@@ -1412,6 +1483,7 @@ async function loadConvFull(id){if(!folderH)return null;const m=convList.find(c=
 
 //== saveConvF ==//
 async function saveConvF(conv){
+if(isWriteBlocked('对话保存'))return false;
 if(!folderH||!conv){if(!folderH)toast('请先选择文件夹');return false}
 let resolve;const myTurn=new Promise(r=>{resolve=r});
 const prevQueue=_saveQueue;_saveQueue=myTurn;
@@ -3115,7 +3187,7 @@ function exportMatTxt(){try{const txt=buildTxt();if(!txt){toast('❌ 导出内�
 
 
 //== pvMeta ==//
-function pvMeta(n){_pvClipText=(materials.metaPrompts[n])||'(空)';pushMo(`🎯 ${n}`,`<div class="pv-ct">${esc(_pvClipText)}</div>`,`<button class="mo-btn sec" onclick="copyText(_pvClipText).then(()=>ok())">📋</button><button class="mo-btn sec" onclick="moStack=[];matJumpToEdit('meta','${escA(n)}')">✏️编辑</button><button class="mo-btn pri wm-avoid" onclick="popMo()">返回</button>`)}
+function pvMeta(n){_pvClipText=(materials.metaPrompts[n])||'(空)';pushMo(`🎯 ${n}`,`<div class="pv-ct">${esc(_pvClipText)}</div>`,`<button class="mo-btn sec" onclick="copyText(_pvClipText).then(()=>ok())">📋</button><button class="mo-btn sec" onclick="moStack=[];matJumpToEdit('meta','${escA(n)}')">✏️编辑</button><button class="mo-btn pri" onclick="popMo()">返回</button>`)}
 
 //== matJumpToEdit ==//
 function matJumpToEdit(type,name){
@@ -3141,7 +3213,7 @@ setTimeout(()=>{const el=document.querySelector(`#editMetaPromptList .mat-exp[da
 },150)})}
 
 //== pvChar ==//
-function pvChar(n){const c=materials.chars[n];if(!c)return;const kws=c.keywords||[];_pvClipText=`${c.d||'(空)'}\n\n简要: ${c.s||'(空)'}${c.h?'\n\n🔞: '+c.h:''}`;pushMo(`👤 ${n}`,`<div class="pv-ct">${esc(_pvClipText)}</div><div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--bd)"><div style="font-weight:600;margin-bottom:6px">🔑 关键词</div><div style="font-size:12px;color:var(--tx-s);margin-bottom:6px">${kws.length?kws.join('、'):'(无)'}</div><button class="bbn" onclick="editCharKw('${escA(n)}')">✏️编辑关键词</button></div>`,`<button class="mo-btn sec" onclick="copyText(_pvClipText).then(()=>ok())">📋</button><button class="mo-btn sec" onclick="matJumpToEdit('char','${escA(n)}')">✏️编辑</button><button class="mo-btn pri wm-avoid" onclick="popMo()">返回</button>`)}
+function pvChar(n){const c=materials.chars[n];if(!c)return;const kws=c.keywords||[];_pvClipText=`${c.d||'(空)'}\n\n简要: ${c.s||'(空)'}${c.h?'\n\n🔞: '+c.h:''}`;pushMo(`👤 ${n}`,`<div class="pv-ct">${esc(_pvClipText)}</div><div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--bd)"><div style="font-weight:600;margin-bottom:6px">🔑 关键词</div><div style="font-size:12px;color:var(--tx-s);margin-bottom:6px">${kws.length?kws.join('、'):'(无)'}</div><button class="bbn" onclick="editCharKw('${escA(n)}')">✏️编辑关键词</button></div>`,`<button class="mo-btn sec" onclick="copyText(_pvClipText).then(()=>ok())">📋</button><button class="mo-btn sec" onclick="matJumpToEdit('char','${escA(n)}')">✏️编辑</button><button class="mo-btn pri" onclick="popMo()">返回</button>`)}
 
 //== editCharKw ==//
 function editCharKw(name){const c=materials.chars[name];const kws=(c.keywords||[]).join(', ');pushMo('🔑 关键词: '+name,`<div class="fg"><label>关键词（逗号分隔）</label><input type="text" id="kwEdit" value="${escA(kws)}"></div>`,`<button class="mo-btn sec" onclick="popMo()">取消</button><button class="mo-btn pri" onclick="doEditCharKw('${escA(name)}')">保存</button>`,'',()=>pvChar(name))}
@@ -3150,7 +3222,7 @@ function editCharKw(name){const c=materials.chars[name];const kws=(c.keywords||[
 function doEditCharKw(name){materials.chars[name].keywords=document.getElementById('kwEdit').value.split(/[,，]/).map(s=>s.trim()).filter(s=>s);saveMats();popMo(true);ok()}
 
 //== pvApp ==//
-function pvApp(n){const kws=materials.appKeywords[n]||[];_pvClipText=materials.apps[n]||'(空)';pushMo(`📄 ${n}`,`<div class="pv-ct">${esc(_pvClipText)}</div><div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--bd)"><div style="font-weight:600;margin-bottom:6px">🔑 关键词</div><div style="font-size:12px;color:var(--tx-s);margin-bottom:6px">${kws.length?kws.join('、'):'(无)'}</div><button class="bbn" onclick="editAppKw('${escA(n)}')">✏️编辑</button></div>`,`<button class="mo-btn sec" onclick="copyText(_pvClipText).then(()=>ok())">📋</button><button class="mo-btn sec" onclick="matJumpToEdit('app','${escA(n)}')">✏️编辑</button><button class="mo-btn pri wm-avoid" onclick="popMo()">返回</button>`)}
+function pvApp(n){const kws=materials.appKeywords[n]||[];_pvClipText=materials.apps[n]||'(空)';pushMo(`📄 ${n}`,`<div class="pv-ct">${esc(_pvClipText)}</div><div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--bd)"><div style="font-weight:600;margin-bottom:6px">🔑 关键词</div><div style="font-size:12px;color:var(--tx-s);margin-bottom:6px">${kws.length?kws.join('、'):'(无)'}</div><button class="bbn" onclick="editAppKw('${escA(n)}')">✏️编辑</button></div>`,`<button class="mo-btn sec" onclick="copyText(_pvClipText).then(()=>ok())">📋</button><button class="mo-btn sec" onclick="matJumpToEdit('app','${escA(n)}')">✏️编辑</button><button class="mo-btn pri" onclick="popMo()">返回</button>`)}
 
 //== showExport ==//
 function showExport(){const ac='background:var(--ac);color:#fff;border-color:var(--ac)';showMo('📤 导出',`<div class="fg"><label>范围</label><div id="expSGrp" style="display:flex;gap:4px;flex-wrap:wrap"><button class="bbn" data-v="current" onclick="pickOpt('expSGrp','expS','current')" style="${ac}">当前对话</button><button class="bbn" data-v="group" onclick="pickOpt('expSGrp','expS','group')">当前分组</button><button class="bbn" data-v="all" onclick="pickOpt('expSGrp','expS','all')">全部对话</button></div><input type="hidden" id="expS" value="current"></div><div class="fg"><label>格式</label><div id="expFmtGrp" style="display:flex;gap:4px;flex-wrap:wrap"><button class="bbn" data-v="json" onclick="pickOpt('expFmtGrp','expFmt','json')" style="${ac}">JSON</button><button class="bbn" data-v="txt" onclick="pickOpt('expFmtGrp','expFmt','txt')">纯文本</button><button class="bbn" data-v="ai" onclick="pickOpt('expFmtGrp','expFmt','ai')">纯AI</button></div><input type="hidden" id="expFmt" value="json"></div><div class="fg"><label><input type="checkbox" id="expA" style="width:14px;height:14px;margin-right:6px" checked>包含设置</label></div><div class="fg"><label><input type="checkbox" id="expMat" style="width:14px;height:14px;margin-right:6px" checked>包含素材</label></div><div class="fg"><label><input type="checkbox" id="expStory" style="width:14px;height:14px;margin-right:6px" checked>包含剧情</label></div>`,`<button class="mo-btn sec" onclick="hideMo()">取消</button><button class="mo-btn pri" onclick="doExport()">📤 导出</button>`)}
@@ -3269,7 +3341,8 @@ function estimateCost(apiId,model,inputTok,outputTok){const p=getModelPrice(apiI
 function recordCostLog(cid,req){const conv=cid===curConvId&&curConv?curConv:null;const cfg=apiConfigs.find(c=>c.id===req.apiId);const p=getModelPrice(req.apiId,req.model);const outTok=cntTok(req.content||'');const inTok=req._inputTok||0;let cost=null,snap=null;if(p){snap={billing:p.billing};if(p.billing==='request'){cost=p.perReq||0;snap.perReq=p.perReq}else{cost=inTok/1e6*(p.inputPerM||0)+outTok/1e6*(p.outputPerM||0);snap.inputPerM=p.inputPerM;snap.outputPerM=p.outputPerM}}const now=new Date();costLogs.unshift({id:'cost_'+gid2(),time:now.toISOString(),day:fmtD(now),month:fmtD(now).slice(0,7),convId:cid,convName:conv?.name||'?',apiId:req.apiId,apiName:cfg?.name||'?',model:req.model,billing:p?.billing||null,inputTok:inTok,outputTok:outTok,totalTok:inTok+outTok,cost,status:req.status||'completed',priceSnapshot:snap});saveCostLogs();updateCostDisplay()}
 
 //== saveCostLogs ==//
-async function saveCostLogs(){if(costLogs.length>10000)costLogs=costLogs.slice(0,10000);try{localStorage.setItem('costLogs',JSON.stringify(costLogs))}catch(e){}if(folderH){try{const f=await folderH.getFileHandle('cost_logs.json',{create:true});const w=await f.createWritable();await w.write(JSON.stringify({items:costLogs}));await w.close()}catch(e){}}}
+async function saveCostLogs(){if(costLogs.length>10000)costLogs=costLogs.slice(0,10000);
+if(isWriteBlocked('费用日志保存')){try{localStorage.setItem('costLogs',JSON.stringify(costLogs))}catch(e){}return}try{localStorage.setItem('costLogs',JSON.stringify(costLogs))}catch(e){}if(folderH){try{const f=await folderH.getFileHandle('cost_logs.json',{create:true});const w=await f.createWritable();await w.write(JSON.stringify({items:costLogs}));await w.close()}catch(e){}}}
 
 //== getCostStats ==//
 function getCostStats(period,apiFilter){const now=new Date(),td=fmtD(now),tm=td.slice(0,7);let fl=costLogs;if(period==='today')fl=fl.filter(l=>l.day===td);else if(period==='month')fl=fl.filter(l=>l.month===tm);else if(period==='lastMonth'){const lm=new Date(now.getFullYear(),now.getMonth()-1,1);const ls=fmtD(lm).slice(0,7);fl=fl.filter(l=>l.month===ls)}else if(period==='week'){const ws=fmtD(new Date(now-7*864e5));fl=fl.filter(l=>l.day>=ws)}else if(period==='30d'){const ws=fmtD(new Date(now-30*864e5));fl=fl.filter(l=>l.day>=ws)}if(apiFilter)fl=fl.filter(l=>l.apiId===apiFilter);const total=fl.reduce((s,l)=>s+(l.cost||0),0),count=fl.length;const bM={},bA={},bC={},bD={};fl.forEach(l=>{const mk=l.model||'?';if(!bM[mk])bM[mk]={model:mk,cost:0,count:0};bM[mk].cost+=(l.cost||0);bM[mk].count++;const ak=l.apiName||'?';if(!bA[ak])bA[ak]={apiName:ak,cost:0,count:0};bA[ak].cost+=(l.cost||0);bA[ak].count++;const ck=l.convId||'?';if(!bC[ck])bC[ck]={convName:l.convName||'?',cost:0,count:0};bC[ck].cost+=(l.cost||0);bC[ck].count++;const dk=l.day||'?';if(!bD[dk])bD[dk]={day:dk,cost:0,count:0};bD[dk].cost+=(l.cost||0);bD[dk].count++});return{total,count,byModel:Object.values(bM).sort((a,b)=>b.cost-a.cost),byApi:Object.values(bA).sort((a,b)=>b.cost-a.cost),byConv:Object.values(bC).sort((a,b)=>b.cost-a.cost),byDay:Object.values(bD).sort((a,b)=>a.day.localeCompare(b.day))}}
