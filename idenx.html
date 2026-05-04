@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的私人工具箱</title>
+    <style>
+        /* 基础页面设置 */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        /* 标题样式 */
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(to right, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        .header p { color: #94a3b8; font-size: 1rem; }
+
+        /* 工具卡片网格布局 */
+        .grid {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        /* 单个卡片样式（毛玻璃+发光悬浮） */
+        .card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 24px;
+            text-decoration: none;
+            color: white;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+        }
+        
+        /* 鼠标移上去的效果 */
+        .card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(167, 139, 250, 0.5);
+            box-shadow: 0 10px 30px -10px rgba(167, 139, 250, 0.3);
+        }
+
+        /* 卡片里的图标 */
+        .icon {
+            font-size: 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            flex-shrink: 0;
+        }
+
+        /* 卡片里的文字 */
+        .info h2 {
+            font-size: 1.25rem;
+            margin-bottom: 6px;
+            color: #f8fafc;
+        }
+        .info p {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>🌌 我的私人工具箱</h1>
+        <p>Vibe Coder 的专属效率库 / 全端云同步</p>
+    </div>
+
+    <div class="grid">
+        <!-- 第 1 个工具：你已经上线的对话工具 -->
+        <a href="duihua.html" class="card">
+            <div class="icon">💬</div>
+            <div class="info">
+                <h2>对话助手</h2>
+                <p>核心创作对话工具，功能最强大的一集。</p>
+            </div>
+        </a>
+
+        <!-- 第 2 个工具：占位用的，你可以随时改 -->
+        <a href="#" class="card">
+            <div class="icon">🧮</div>
+            <div class="info">
+                <h2>超级计算器</h2>
+                <p>建设中...随时可以添加新功能</p>
+            </div>
+        </a>
+
+        <!-- 第 3 个工具：占位用的 -->
+        <a href="#" class="card">
+            <div class="icon">📝</div>
+            <div class="info">
+                <h2>灵感笔记</h2>
+                <p>建设中...随时可以添加新功能</p>
+            </div>
+        </a>
+
+        <!-- 💡 以后要加新工具，就把上面那一段 <a>...</a> 完整复制一份粘贴在下面就行 -->
+    </div>
+
+</body>
+</html>
