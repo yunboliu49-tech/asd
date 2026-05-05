@@ -352,6 +352,7 @@ label.wsLabel{font-size:11px}
 <div class="sb-exp-row"><button onclick="exportToProject()">📤 导出</button><button class="sec" onclick="exportToNew()">📤 另存</button></div>
 <div class="sb-exp-row"><button onclick="showBackupExport()">📦 备份</button><button class="sec" onclick="showBackupImport()">📥 还原</button></div>
 <button class="sb-add-btn" onclick="showPatchSettings()">⚙️ 设置</button>
+<div id="sbVer" style="text-align:center;font-size:10px;color:#555;margin-top:2px"></div>
 </div>
 </div>
 
@@ -431,7 +432,7 @@ let chatMsgs=[],chatGenReqs={},chatApiId=null,chatModel='',chatAutoScroll=true;
 let chatCodeCopyStore={};
 let _createProjCode='',_createProjFileName='',_backupFileData=null;
 
-const VER='1.1.0';
+const VER='1.1.1';
 //== toast ==//
 function toast(msg){document.querySelectorAll('.toast-msg').forEach(t=>t.remove());const t=document.createElement('div');t.className='toast-msg';t.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#252526;color:#e0e0e0;padding:8px 18px;border-radius:4px;border:1px solid #555;z-index:3000;font-size:13px;box-shadow:0 4px 12px rgba(0,0,0,.3);max-width:90vw;text-align:center;font-family:inherit';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2500)}
 
@@ -466,7 +467,7 @@ function showModal(title,body,footer){const box=document.getElementById('generic
 function hideModal(){document.getElementById('genericModal').style.display='none'}
 
 //== initApp ==//
-function initApp(){applyFontSize();document.addEventListener('keydown',e=>{if(e.key==='F5'){e.preventDefault();runAction()}if(e.key==='ArrowDown'&&e.altKey){e.preventDefault();navDiff(1)}if(e.key==='ArrowUp'&&e.altKey){e.preventDefault();navDiff(-1)}});document.addEventListener('click',e=>{if(!e.target.closest('.ch-sel'))hideAllChDD();if(!e.target.closest('.ch-ctx-menu'))chatHideCtxMenu()});chatBindScroll();initIDB().then(()=>tryRestoreWorkspace())}
+function initApp(){applyFontSize();document.addEventListener('keydown',e=>{if(e.key==='F5'){e.preventDefault();runAction()}if(e.key==='ArrowDown'&&e.altKey){e.preventDefault();navDiff(1)}if(e.key==='ArrowUp'&&e.altKey){e.preventDefault();navDiff(-1)}});document.addEventListener('click',e=>{if(!e.target.closest('.ch-sel'))hideAllChDD();if(!e.target.closest('.ch-ctx-menu'))chatHideCtxMenu()});chatBindScroll();const ve=document.getElementById('sbVer');if(ve)ve.textContent='v'+VER;initIDB().then(()=>tryRestoreWorkspace())}
 initApp();
 
 //== initIDB ==//
@@ -617,7 +618,7 @@ function rollbackToMod(idx){const m=modHist[idx];if(!m||!confirm('回滚？'))re
 function clearModHist(){if(!modHist.length||!confirm('清空？'))return;modHist=[];modHistCur=-1;renderModHist()}
 
 //== showPatchSettings ==//
-function showPatchSettings(){closeSidebar();let sApiH='';if(sharedApis.length)sApiH=sharedApis.map(a=>'<div class="sp-api-item"><span class="api-nm">'+esc(a.name)+'</span><span class="api-cnt">('+a.models.length+')</span></div>').join('');else sApiH='<div style="color:#777;font-size:12px;padding:8px;text-align:center">未读取到 config.json</div>';let lApiH='';(patchCfg.localApis||[]).forEach((a,i)=>{lApiH+='<div class="sp-api-item"><span class="api-nm">'+esc(a.name)+'</span><span class="api-cnt">('+a.models.length+')</span><button class="tbtn" onclick="deleteLocalApi('+i+')" style="padding:2px 6px;font-size:10px;margin-left:auto">🗑️</button></div>'});document.getElementById('settingsBody').innerHTML='<div class="sp-section"><h4>🖥️ 显示设置</h4><div class="fs-row"><button class="tbtn" onclick="changeFontSize(-1)">A-</button><span class="fs-val" id="fsVal">'+(patchCfg.fontSize||13)+'px</span><button class="tbtn" onclick="changeFontSize(1)">A+</button><span style="font-size:11px;color:#888">范围 11px - 18px，保存后下次仍生效</span></div></div><div class="sp-section"><h4>📝 System Prompt</h4><div style="font-size:11px;color:#888;margin-bottom:6px">对话模式的系统设定</div><textarea class="sp-ta" id="spEdit" style="min-height:300px">'+esc(patchCfg.systemPrompt)+'</textarea><div style="margin-top:6px"><button class="tbtn" onclick="document.getElementById(\'spEdit\').value=DEFAULT_SYS_PROMPT;toast(\'✓ 已恢复\')">🔄 恢复默认</button></div></div><div class="sp-section"><h4>🔌 共享 API（只读）</h4>'+sApiH+'<button class="tbtn" onclick="loadSharedConfig().then(()=>{showPatchSettings();toast(\'✓\')})" style="margin-top:6px">🔄 刷新</button></div><div class="sp-section"><h4>🔧 本地 API</h4>'+lApiH+'<button class="tbtn primary" onclick="addLocalApi()" style="margin-top:6px">+ 添加</button></div>';document.getElementById('settingsModal').style.display='flex';applyFontSize()}
+function showPatchSettings(){closeSidebar();let sApiH='';if(sharedApis.length)sApiH=sharedApis.map(a=>'<div class="sp-api-item"><span class="api-nm">'+esc(a.name)+'</span><span class="api-cnt">('+a.models.length+')</span></div>').join('');else sApiH='<div style="color:#777;font-size:12px;padding:8px;text-align:center">未读取到 config.json</div>';let lApiH='';(patchCfg.localApis||[]).forEach((a,i)=>{lApiH+='<div class="sp-api-item"><span class="api-nm">'+esc(a.name)+'</span><span class="api-cnt">('+a.models.length+')</span><button class="tbtn" onclick="deleteLocalApi('+i+')" style="padding:2px 6px;font-size:10px;margin-left:auto">🗑️</button></div>'});document.getElementById('settingsBody').innerHTML='<div style="font-size:11px;color:#666;margin-bottom:12px;text-align:right">版本 v'+VER+'</div><div class="sp-section"><h4>🖥️ 显示设置</h4><div class="fs-row"><button class="tbtn" onclick="changeFontSize(-1)">A-</button><span class="fs-val" id="fsVal">'+(patchCfg.fontSize||13)+'px</span><button class="tbtn" onclick="changeFontSize(1)">A+</button><span style="font-size:11px;color:#888">范围 11px - 18px，保存后下次仍生效</span></div></div><div class="sp-section"><h4>📝 System Prompt</h4><div style="font-size:11px;color:#888;margin-bottom:6px">对话模式的系统设定</div><textarea class="sp-ta" id="spEdit" style="min-height:300px">'+esc(patchCfg.systemPrompt)+'</textarea><div style="margin-top:6px"><button class="tbtn" onclick="document.getElementById(\'spEdit\').value=DEFAULT_SYS_PROMPT;toast(\'✓ 已恢复\')">🔄 恢复默认</button></div></div><div class="sp-section"><h4>🔌 共享 API（只读）</h4>'+sApiH+'<button class="tbtn" onclick="loadSharedConfig().then(()=>{showPatchSettings();toast(\'✓\')})" style="margin-top:6px">🔄 刷新</button></div><div class="sp-section"><h4>🔧 本地 API</h4>'+lApiH+'<button class="tbtn primary" onclick="addLocalApi()" style="margin-top:6px">+ 添加</button></div>';document.getElementById('settingsModal').style.display='flex';applyFontSize()}
 
 //== saveSettingsUI ==//
 function saveSettingsUI(){patchCfg.systemPrompt=document.getElementById('spEdit')?.value||'';applyFontSize();savePatchSettings();hideSettingsModal();toast('✓ 已保存')}
