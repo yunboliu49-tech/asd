@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
-<title>创作对话工具 v3.1.48</title>
+<title>创作对话工具 v3.1.50</title>
 <style>
-  
+
 :root{--bg-p:#151513;--bg-s:#1d1d1a;--bg-t:#282824;--tx-p:#e8e3d8;--tx-s:#b6afa2;--tx-m:#777065;--bd:#37362f;--ac:#78bfa6;--ach:#66ad95;--ac-soft:rgba(120,191,166,.14);--ok:#79c58e;--ok-soft:rgba(121,197,142,.16);--wn:#d6a85f;--wn-soft:rgba(214,168,95,.16);--dn:#d9827b;--dn-soft:rgba(217,130,123,.16);--purple:#b68ac8;--purple-soft:rgba(182,138,200,.14);--pink:#d887a8;--pink-soft:rgba(216,135,168,.16);--gold:#d6a85f;--gold-soft:rgba(214,168,95,.16);--indigo:#8d9cc8;--indigo-soft:rgba(141,156,200,.14);--orange:#d69363;--orange-soft:rgba(214,147,99,.16);--code-bg:rgba(0,0,0,.22);--mark-bg:rgba(214,168,95,.32);--ubg:#243a34;--abg:transparent;--ts:16px;--bs:14px;--fs:15px;--safe-t:env(safe-area-inset-top);--safe-b:env(safe-area-inset-bottom);--sw:260px;--r:4px;--mat-accent:#78bfa6}
 [data-theme=light]{--bg-p:#f6f7f4;--bg-s:#ffffff;--bg-t:#edf1ec;--tx-p:#1f2521;--tx-s:#5a625c;--tx-m:#909891;--bd:#d9dfd8;--ac:#4f9f82;--ach:#448f74;--ac-soft:rgba(79,159,130,.12);--ok:#4f9d68;--ok-soft:rgba(79,157,104,.13);--wn:#b9893e;--wn-soft:rgba(185,137,62,.14);--dn:#c96d67;--dn-soft:rgba(201,109,103,.14);--purple:#9063a3;--purple-soft:rgba(144,99,163,.12);--pink:#bd6688;--pink-soft:rgba(189,102,136,.13);--gold:#b9893e;--gold-soft:rgba(185,137,62,.14);--indigo:#6578ad;--indigo-soft:rgba(101,120,173,.12);--orange:#b97542;--orange-soft:rgba(185,117,66,.14);--code-bg:rgba(0,0,0,.07);--mark-bg:rgba(185,137,62,.25);--ubg:#e2f0eb;--abg:transparent;--mat-accent:#4f9f82}
 [data-theme=sepia]{--bg-p:#f4ecd8;--bg-s:#faf6eb;--bg-t:#e8e0c8;--tx-p:#3d3229;--tx-s:#5d4e37;--tx-m:#8a7a5a;--bd:#d4c8a8;--ac:#9b7a32;--ach:#856828;--ac-soft:rgba(155,122,50,.15);--ok:#6f8f45;--ok-soft:rgba(111,143,69,.15);--wn:#b8860b;--wn-soft:rgba(184,134,11,.16);--dn:#b76654;--dn-soft:rgba(183,102,84,.15);--purple:#8d6a93;--purple-soft:rgba(141,106,147,.14);--pink:#b66f82;--pink-soft:rgba(182,111,130,.15);--gold:#b8860b;--gold-soft:rgba(184,134,11,.16);--indigo:#6f759c;--indigo-soft:rgba(111,117,156,.13);--orange:#b9783f;--orange-soft:rgba(185,120,63,.15);--code-bg:rgba(61,50,41,.08);--mark-bg:rgba(184,134,11,.25);--ubg:#ede4c8;--abg:transparent;--mat-accent:#7f8f45}
@@ -679,6 +679,7 @@ html,body{overflow-x:hidden;max-width:100vw}
 <span class="fld-st" id="fldSt">未连接</span>
 <button class="tb" onclick="importMatTxt()">📥素材</button>
 <button class="tb" onclick="importStoriesJson()">📅剧情</button>
+<button class="tb" onclick="exportMovePack()">🚚搬家</button>
 <button class="tb" onclick="showExport()">📤导出</button>
 <button class="tb" onclick="showImport()">📥导入</button>
 </div>
@@ -709,6 +710,7 @@ html,body{overflow-x:hidden;max-width:100vw}
 <button class="tb" id="fldBtnM" onclick="selectFolder()" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">📁 文件夹</button>
 <button class="tb" style="flex-shrink:0" onclick="importMatTxt()">📥素材</button>
 <button class="tb" style="flex-shrink:0" onclick="importStoriesJson()">📅剧情</button>
+<button class="tb" style="flex-shrink:0" onclick="exportMovePack()">🚚搬家</button>
 <button class="tb" style="flex-shrink:0" onclick="createGroup()">+组</button>
 </div>
 <div style="display:flex;gap:4px;margin-bottom:4px"><button class="tb" style="flex-shrink:0" onclick="showExport()">📤导出</button><button class="tb" style="flex:1" onclick="showImport()">📥导入</button></div>
@@ -750,14 +752,14 @@ html,body{overflow-x:hidden;max-width:100vw}
 </div></div></div>
 <!-- 素材编辑器 -->
 <div class="mat-app" id="matApp"></div>
-<div class="version">v3.1.48</div>
+<div class="version">v3.1.50</div>
 <div class="mo" id="modal"><div class="mo-box" id="moBox"><div class="mo-hdr"><h3 id="moTitle"></h3><button class="mo-cls" onclick="moClose()">×</button></div><div class="mo-body" id="moBody"></div><div class="mo-ftr" id="moFtr"></div></div></div>
 <div class="ctx" id="ctxMenu"></div>
 <div class="ctx" id="convMenu"></div>
 <div class="ctx" id="grpMenu"></div>
 <script>
 // ==================== 公共区 ====================
-const VER='3.1.48',RSN_F=['reasoning_content','reasoning','thinking','thought','inner_monologue'];
+const VER='3.1.50',RSN_F=['reasoning_content','reasoning','thinking','thought','inner_monologue'];
 let materials={chars:{},charOrder:[],rels:{},relIndex:[],apps:{},appOrder:[],appGroups:{},groupOrder:[],metaPrompts:{},metaOrder:[],appKeywords:{},_sourceFile:'',_importedAt:'',_savedAt:''};
 let storyData={timelineYears:[],stories:[]},tlPointsChat=[];
 let localMeta={},folderH=null,isMobile=false,kbOn=false;
@@ -786,6 +788,7 @@ let _wsTimer=null,_wsSaveTimer=null,_wsDragId=null,_wsPopOpen=false;
 let ctxStat={total:0,included:0,startIdx:null,endIdx:null,prevIdx:null,matTok:0,totalTok:0,hasCut:false,reason:'',pack:null};
 let _wsSwipeOpenId=null,_wsSwipeMoved=false;
 let _folderIDB=null;
+let moveFolderH=null;
 let inputAttachments=[];
 const INSTANCE_ID='win_'+gid2();
 let writeLocked=false,_lockTimer=null,_lockKey=null;
@@ -911,7 +914,7 @@ document.getElementById('modal').addEventListener('click',function(e){if(e.targe
 function ext(t,l){const m=t.match(new RegExp('〖'+l+'〗([\\s\\S]*?)(?=〖|$)'));return m?m[1].trim():''}
 
 //== extL ==//
-function extL(t,l){const m=t.match(new RegExp(l+'[:：](.+)'));return m?m[1].split(/[,，]/).map(s=>s.trim()).filter(s=>s):[]}
+function extL(t,l){const m=t.match(new RegExp('(?:^|\\n)\\s*'+l+'[:：]([^\\n]+)'));return m?m[1].split(/[,，]/).map(s=>s.trim()).filter(s=>s):[]}
 
 //== parseMat ==//
 function parseMat(txt){
@@ -1322,6 +1325,152 @@ toast('⚠️ 文件夹记忆失败：'+e.name+(e.message?': '+e.message.substri
 
 //== loadFolderHandleIDB ==//
 function loadFolderHandleIDB(){return new Promise(resolve=>{if(!_folderIDB){resolve(null);return}try{const tx=_folderIDB.transaction('handles','readonly');const req=tx.objectStore('handles').get('folderH');req.onsuccess=()=>resolve(req.result||null);req.onerror=()=>resolve(null)}catch(e){resolve(null)}})}
+
+//== saveMoveFolderHandleIDB ==//
+function saveMoveFolderHandleIDB(handle){
+if(!_folderIDB){
+toast('⚠️ 搬家文件夹记忆失败：IndexedDB 未初始化');
+return
+}
+try{
+const tx=_folderIDB.transaction('handles','readwrite');
+const req=tx.objectStore('handles').put(handle,'moveFolderH');
+req.onsuccess=()=>console.log('[move-folder-handle] saved:',handle?.name||'folder');
+req.onerror=e=>{
+const err=e.target.error;
+console.error('[move-folder-handle] save failed:',err);
+toast('⚠️ 搬家文件夹记忆失败：'+(err?.name||'IndexedDB错误'))
+}
+}catch(e){
+console.error('[move-folder-handle] save threw:',e);
+toast('⚠️ 搬家文件夹记忆失败：'+e.name)
+}
+}
+
+//== loadMoveFolderHandleIDB ==//
+function loadMoveFolderHandleIDB(){return new Promise(resolve=>{if(!_folderIDB){resolve(null);return}try{const tx=_folderIDB.transaction('handles','readonly');const req=tx.objectStore('handles').get('moveFolderH');req.onsuccess=()=>resolve(req.result||null);req.onerror=()=>resolve(null)}catch(e){resolve(null)}})}
+
+//== selectMoveFolder ==//
+async function selectMoveFolder(){
+if(!window.showDirectoryPicker){toast('当前浏览器不支持选择导出文件夹');return false}
+try{
+const h=await window.showDirectoryPicker({mode:'readwrite'});
+moveFolderH=h;
+saveMoveFolderHandleIDB(h);
+toast('✓ 搬家文件夹已设置：'+h.name);
+return true
+}catch(e){
+if(e.name!=='AbortError')toast('❌ 选择搬家文件夹失败: '+e.name);
+return false
+}
+}
+
+//== getMoveFolderReady ==//
+async function getMoveFolderReady(){
+if(!window.showDirectoryPicker)return{ok:false,reason:'当前浏览器不支持直接写入文件夹'};
+if(!moveFolderH)moveFolderH=await loadMoveFolderHandleIDB();
+if(!moveFolderH){
+const yes=confirm('第一次使用需要选择搬家包导出文件夹。\n建议选择坚果云里的 ChatTool搬家包 文件夹。\n\n现在选择？');
+if(!yes)return{ok:false,reason:'你取消了选择搬家文件夹'};
+const picked=await selectMoveFolder();
+if(!picked)return{ok:false,reason:'未选择搬家文件夹'};
+}
+try{
+let perm=await moveFolderH.queryPermission({mode:'readwrite'});
+if(perm!=='granted')perm=await moveFolderH.requestPermission({mode:'readwrite'});
+if(perm!=='granted')return{ok:false,reason:'搬家文件夹授权未通过'};
+return{ok:true,handle:moveFolderH}
+}catch(e){
+moveFolderH=null;
+return{ok:false,reason:'搬家文件夹授权失效：'+e.name}
+}
+}
+
+//== getMovePackFileName ==//
+function getMovePackFileName(){
+const d=new Date();
+const pad=n=>String(n).padStart(2,'0');
+const dev=isMobile?'PHONE':'PC';
+return `chattool_${dev}_${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}.json`
+}
+
+//== buildMovePack ==//
+async function buildMovePack(){
+const targets=[];
+for(const m of convList){
+const c=m.id===curConvId&&curConv?curConv:await loadConvFull(m.id);
+if(c)targets.push(c)
+}
+if(!targets.length)throw new Error('无对话可导出');
+const d={'__exported_items':['conversations'],'__exported_at':new Date().toISOString(),configVersion:13,'chat-sessions-list':[]};
+const ct={version:VER,apiConfigs,starredModels,groups,params,uiSettings,shortcuts,curApiId,curModel,quickPhrases,localMeta,priceTable,costSettings,materials,storyData};
+if(folderH){
+try{
+const vd=await folderH.getDirectoryHandle('mat_versions');
+const pf=await vd.getFileHandle('_projects.json');
+ct.matProjects=JSON.parse(await(await pf.getFile()).text());
+ct.matVersionFiles={};
+for await(const en of vd.values()){
+if(en.kind==='file'&&en.name.endsWith('.txt'))ct.matVersionFiles[en.name]=await(await en.getFile()).text()
+}
+}catch(e){}
+}
+d._chatTool=ct;
+d._chatToolCostLogs={version:1,savedAt:new Date().toISOString(),items:costLogs};
+targets.forEach(conv=>{
+d['chat-sessions-list'].push({id:conv.id,name:conv.name,starred:conv.pinned||false,type:'chat'});
+const sp=genMatFull(conv.materialConfig);
+const msgs=[];
+if(sp)msgs.push({id:gid2(),role:'system',contentParts:[{type:'text',text:sp}]});
+(conv.messages||[]).forEach(msg=>{
+const cp=[];
+if(msg.reasoning)cp.push({type:'reasoning',text:msg.reasoning,duration:msg.reasoningDuration||0});
+cp.push({type:'text',text:msg.content||''});
+msgs.push({id:msg.id,role:msg.role,contentParts:cp,timestamp:msg.timestamp?new Date(msg.timestamp).getTime():Date.now(),model:msg.model||'',generating:false})
+});
+d[`session:${conv.id}`]={id:conv.id,name:conv.name,type:'chat',starred:conv.pinned||false,messages:msgs,messageForksHash:{},_chatTool:{materialConfig:conv.materialConfig,tempAppendices:conv.tempAppendices||[],groupId:conv.groupId||'_default',convParams:conv.convParams||{},foldGroups:conv.foldGroups||[],foldedMsgIds:conv.foldedMsgIds||[],lockedModel:conv.lockedModel||null}}
+});
+return{fileName:getMovePackFileName(),text:JSON.stringify(d,null,2)}
+}
+
+//== downloadMovePack ==//
+function downloadMovePack(fileName,text,reason){
+if(reason)toast('⚠️ '+reason);
+const ok2=confirm((reason?reason+'\n\n':'')+'将改为普通下载搬家包，继续？');
+if(!ok2){toast('已取消普通下载');return}
+dl(fileName,text,'application/json');
+toast('✓ 已普通下载搬家包')
+}
+
+//== exportMovePack ==//
+async function exportMovePack(){
+try{
+if(!folderH&&!convList.length){toast('请先连接/导入数据');return}
+showMo('🚚 生成搬家包',`<div style="text-align:center;padding:20px"><div id="mvStatus">正在打包全部对话、设置、素材、剧情和费用日志...</div><div class="prog-bar"><div class="prog-fill" style="width:45%"></div></div></div>`,'');
+await new Promise(r=>setTimeout(r,30));
+const pack=await buildMovePack();
+const ready=await getMoveFolderReady();
+if(!ready.ok){
+hideMo();
+downloadMovePack(pack.fileName,pack.text,ready.reason||'无法写入搬家文件夹');
+return
+}
+try{
+const f=await ready.handle.getFileHandle(pack.fileName,{create:true});
+const w=await f.createWritable();
+await w.write(pack.text);
+await w.close();
+hideMo();
+toast('✓ 搬家包已导出到：'+ready.handle.name+'/'+pack.fileName)
+}catch(e){
+hideMo();
+downloadMovePack(pack.fileName,pack.text,'写入搬家文件夹失败：'+e.name+(e.message?': '+e.message.substring(0,50):''))
+}
+}catch(e){
+hideMo();
+toast('❌ 搬家包导出失败: '+(e.message||e.name))
+}
+}
 
 //== tryRestoreFolder ==//
 async function tryRestoreFolder(){
@@ -3380,7 +3529,7 @@ function doEditCharKw(name){materials.chars[name].keywords=document.getElementBy
 function pvApp(n){const kws=materials.appKeywords[n]||[];_pvClipText=materials.apps[n]||'(空)';pushMo(`📄 ${n}`,`<div class="pv-ct">${esc(_pvClipText)}</div><div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--bd)"><div style="font-weight:600;margin-bottom:6px">🔑 关键词</div><div style="font-size:12px;color:var(--tx-s);margin-bottom:6px">${kws.length?kws.join('、'):'(无)'}</div><button class="bbn" onclick="editAppKw('${escA(n)}')">✏️编辑</button></div>`,`<button class="mo-btn sec" onclick="copyText(_pvClipText).then(()=>ok())">📋</button><button class="mo-btn sec" onclick="matJumpToEdit('app','${escA(n)}')">✏️编辑</button><button class="mo-btn pri" onclick="popMo()">返回</button>`)}
 
 //== showExport ==//
-function showExport(){const ac='background:var(--ac);color:#fff;border-color:var(--ac)';showMo('📤 导出',`<div class="fg"><label>范围</label><div id="expSGrp" style="display:flex;gap:4px;flex-wrap:wrap"><button class="bbn" data-v="current" onclick="pickOpt('expSGrp','expS','current')" style="${ac}">当前对话</button><button class="bbn" data-v="group" onclick="pickOpt('expSGrp','expS','group')">当前分组</button><button class="bbn" data-v="all" onclick="pickOpt('expSGrp','expS','all')">全部对话</button></div><input type="hidden" id="expS" value="current"></div><div class="fg"><label>格式</label><div id="expFmtGrp" style="display:flex;gap:4px;flex-wrap:wrap"><button class="bbn" data-v="json" onclick="pickOpt('expFmtGrp','expFmt','json')" style="${ac}">JSON</button><button class="bbn" data-v="txt" onclick="pickOpt('expFmtGrp','expFmt','txt')">纯文本</button><button class="bbn" data-v="ai" onclick="pickOpt('expFmtGrp','expFmt','ai')">纯AI</button></div><input type="hidden" id="expFmt" value="json"></div><div class="fg"><label><input type="checkbox" id="expA" style="width:14px;height:14px;margin-right:6px" checked>包含设置</label></div><div class="fg"><label><input type="checkbox" id="expMat" style="width:14px;height:14px;margin-right:6px" checked>包含素材</label></div><div class="fg"><label><input type="checkbox" id="expStory" style="width:14px;height:14px;margin-right:6px" checked>包含剧情</label></div><div class="fg"><label><input type="checkbox" id="expCost" style="width:14px;height:14px;margin-right:6px">包含费用日志(完整搬家)</label></div>`,`<button class="mo-btn sec" onclick="hideMo()">取消</button><button class="mo-btn pri" onclick="doExport()">📤 导出</button>`)}
+function showExport(){const ac='background:var(--ac);color:#fff;border-color:var(--ac)';showMo('📤 导出',`<div style="padding:8px 10px;background:var(--bg-t);border:1px solid var(--bd);border-radius:var(--r);margin-bottom:10px"><div style="font-weight:600;margin-bottom:4px">🚚 一键搬家包</div><div style="font-size:12px;color:var(--tx-m);line-height:1.5;margin-bottom:8px">自动导出全部对话、设置、素材、剧情、费用日志。优先写入你设置的搬家文件夹；不行会提示后改为普通下载。</div><button class="mo-btn pri" onclick="hideMo();exportMovePack()">🚚 导出搬家包</button></div><div class="fg"><label>范围</label><div id="expSGrp" style="display:flex;gap:4px;flex-wrap:wrap"><button class="bbn" data-v="current" onclick="pickOpt('expSGrp','expS','current')" style="${ac}">当前对话</button><button class="bbn" data-v="group" onclick="pickOpt('expSGrp','expS','group')">当前分组</button><button class="bbn" data-v="all" onclick="pickOpt('expSGrp','expS','all')">全部对话</button></div><input type="hidden" id="expS" value="current"></div><div class="fg"><label>格式</label><div id="expFmtGrp" style="display:flex;gap:4px;flex-wrap:wrap"><button class="bbn" data-v="json" onclick="pickOpt('expFmtGrp','expFmt','json')" style="${ac}">JSON</button><button class="bbn" data-v="txt" onclick="pickOpt('expFmtGrp','expFmt','txt')">纯文本</button><button class="bbn" data-v="ai" onclick="pickOpt('expFmtGrp','expFmt','ai')">纯AI</button></div><input type="hidden" id="expFmt" value="json"></div><div class="fg"><label><input type="checkbox" id="expA" style="width:14px;height:14px;margin-right:6px" checked>包含设置</label></div><div class="fg"><label><input type="checkbox" id="expMat" style="width:14px;height:14px;margin-right:6px" checked>包含素材</label></div><div class="fg"><label><input type="checkbox" id="expStory" style="width:14px;height:14px;margin-right:6px" checked>包含剧情</label></div><div class="fg"><label><input type="checkbox" id="expCost" style="width:14px;height:14px;margin-right:6px">包含费用日志(完整搬家)</label></div>`,`<button class="mo-btn sec" onclick="hideMo()">取消</button><button class="mo-btn sec" onclick="hideMo();exportMovePack()">🚚 搬家包</button><button class="mo-btn pri" onclick="doExport()">📤 导出</button>`)}
 
 //== doExport ==//
 async function doExport(){const sc=document.getElementById('expS').value,fmt=document.getElementById('expFmt').value,incCfg=document.getElementById('expA').checked,incMat=document.getElementById('expMat').checked,incStory=document.getElementById('expStory').checked,incCost=document.getElementById('expCost')?.checked||false;let targets=[];if(sc==='current'){if(curConv)targets=[curConv]}else if(sc==='group'){const gid=curConv?.groupId||'_default';for(const m of convList.filter(c=>(c.groupId||'_default')===gid)){const c=await loadConvFull(m.id);if(c)targets.push(c)}}else{for(const m of convList){const c=await loadConvFull(m.id);if(c)targets.push(c)}}if(!targets.length){toast('无数据');return}let fileName;if(targets.length===1){fileName=targets[0].name.replace(/[\/\\:*?"<>|]/g,'_').substring(0,50)+'_'+fmtD(new Date())}else fileName='对话_'+fmtD(new Date());if(fmt==='txt'||fmt==='ai'){let txt='';targets.forEach(conv=>{if(targets.length>1)txt+=`\n${'='.repeat(40)}\n📁 ${conv.name}\n${'='.repeat(40)}\n\n`;conv.messages?.forEach((m,i)=>{if(fmt==='ai'&&m.role!=='assistant')return;if(fmt==='txt')txt+=`[#${i+1} ${m.role==='user'?'用户':m.role==='system'?'系统':'AI'}]\n${m.content||''}\n\n`;else txt+=(m.content||'')+'\n\n---\n\n'})});dl(fileName+'.txt',txt.trim(),'text/plain');hideMo();ok();return}const d={'__exported_items':['conversations'],'__exported_at':new Date().toISOString(),configVersion:13,'chat-sessions-list':[]};if(incCfg){const ct={version:VER,apiConfigs,starredModels,groups,params,uiSettings,shortcuts,curApiId,curModel,quickPhrases,localMeta,priceTable,costSettings};if(incMat){ct.materials=materials;if(folderH){try{const vd=await folderH.getDirectoryHandle('mat_versions');const pf=await vd.getFileHandle('_projects.json');ct.matProjects=JSON.parse(await(await pf.getFile()).text());ct.matVersionFiles={};for await(const en of vd.values()){if(en.kind==='file'&&en.name.endsWith('.txt')){ct.matVersionFiles[en.name]=await(await en.getFile()).text()}}}catch(e){}}}if(incStory&&storyData.stories?.length)ct.storyData=storyData;d._chatTool=ct}if(incCost)d._chatToolCostLogs={version:1,savedAt:new Date().toISOString(),items:costLogs};targets.forEach(conv=>{d['chat-sessions-list'].push({id:conv.id,name:conv.name,starred:conv.pinned||false,type:'chat'});const sp=genMatFull(conv.materialConfig);const msgs=[];if(sp)msgs.push({id:gid2(),role:'system',contentParts:[{type:'text',text:sp}]});(conv.messages||[]).forEach(msg=>{const cp=[];if(msg.reasoning)cp.push({type:'reasoning',text:msg.reasoning,duration:msg.reasoningDuration||0});cp.push({type:'text',text:msg.content||''});msgs.push({id:msg.id,role:msg.role,contentParts:cp,timestamp:msg.timestamp?new Date(msg.timestamp).getTime():Date.now(),model:msg.model||'',generating:false})});d[`session:${conv.id}`]={id:conv.id,name:conv.name,type:'chat',starred:conv.pinned||false,messages:msgs,messageForksHash:{},_chatTool:{materialConfig:conv.materialConfig,tempAppendices:conv.tempAppendices||[],groupId:conv.groupId||'_default',convParams:conv.convParams||{},foldGroups:conv.foldGroups||[],foldedMsgIds:conv.foldedMsgIds||[],lockedModel:conv.lockedModel||null}}});dl(fileName+'.json',JSON.stringify(d,null,2),'application/json');hideMo();ok()}
