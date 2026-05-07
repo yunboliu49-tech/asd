@@ -535,11 +535,11 @@ function bindEvents(){bindTouchEvents();bindMouseEvents();document.addEventListe
 function bindMouseEvents(){
 canvas.addEventListener('contextmenu',e=>{e.preventDefault();let r=canvas.getBoundingClientRect();handleCanvasRightClick(e.clientX,e.clientY,e.clientX-r.left,e.clientY-r.top);});
 
-canvas.addEventListener('mousedown',e=>{hideCtx();let r=canvas.getBoundingClientRect(),sx=e.clientX-r.left,sy=e.clientY-r.top;
+canvas.addEventListener('mousedown',e=>{hideCtx();if(layoutBarState.open&&!e.target.closest('#layoutBar'))closeLayoutBar();let r=canvas.getBoundingClientRect(),sx=e.clientX-r.left,sy=e.clientY-r.top;
 // cursor handle
 if(hitTestCursorHandle(sx,sy)){dragMode='cursor';dragState={active:true,moved:false};return;}
 // node
-let nid=hitTestNode(sx,sy);if(nid){dragMode='node_pending';dragPayload={id:nid,startSX:sx,startSY:sy};dragState={active:true,sx:e.clientX,sy:e.clientY,stx:cam.tx,sty:cam.ty,moved:false};longPressTimer=setTimeout(()=>{if(!dragState.moved&&dragMode==='node_pending'){dragMode='relDrag_ready';longPressTimer=setTimeout(()=>{if(!dragState.moved){dragMode='';dragState.active=false;showNodeCtx(e.clientX,e.clientY,nid);}},250);}},300);return;}
+let nid=hitTestNode(sx,sy);if(nid){dragMode='node_pending';dragPayload={id:nid,startSX:sx,startSY:sy};dragState={active:true,sx:e.clientX,sy:e.clientY,stx:cam.tx,sty:cam.ty,moved:false};longPressTimer=setTimeout(()=>{if(!dragState.moved&&dragMode==='node_pending'){dragMode='relDrag_ready';}},300);return;}
 // lane header
 let lh=hitTestLaneHeaderScreen(sx,sy);if(lh){dragMode='laneDrag_pending';dragPayload={id:lh.id};dragState={active:true,moved:false,sx:e.clientX,sy:e.clientY};longPressTimer=setTimeout(()=>{if(!dragState.moved){dragMode='';dragState.active=false;showLaneCtx(e.clientX,e.clientY,lh.id);}},500);return;}
 // pan
@@ -558,6 +558,7 @@ let prevMode=dragMode,wasTap=!dragState.moved&&(prevMode==='node_pending'||prevM
 if(wasTap){let r=canvas.getBoundingClientRect();tapSX=e.clientX-r.left;tapSY=e.clientY-r.top;}
 if(dragMode==='node'&&dragPayload){let r=canvas.getBoundingClientRect(),w=screenToWorld(e.clientX-r.left,e.clientY-r.top);endNodeDrop(dragPayload.id,w);}
 if(dragMode==='relDrag'&&relDragState.active){let hint=document.getElementById('relDragHint');hint.style.display='none';if(relDragState.toId)openQuickRelForm(relDragState.fromId,relDragState.toId);relDragState={active:false,fromId:null,toId:null,sx:0,sy:0};needsRender=true;}
+if(dragMode==='relDrag_ready'&&!dragState.moved&&dragPayload){showNodeCtx(e.clientX,e.clientY,dragPayload.id);}
 if(dragMode==='laneDrag'&&dragState.moved&&dragPayload){let r=canvas.getBoundingClientRect();endLaneDrop(dragPayload.id,e.clientY-r.top);}else if(dragMode==='laneDrag')cancelChange();
 hideDragHud();dragMode='';dragPayload=null;dragState.active=false;
 if(wasTap)handleCanvasClick(tapSX,tapSY);});
@@ -567,9 +568,9 @@ canvas.addEventListener('wheel',e=>{e.preventDefault();let r=canvas.getBoundingC
 
 //== bindTouchEvents ==//
 function bindTouchEvents(){
-canvas.addEventListener('touchstart',e=>{e.preventDefault();hideCtx();let t=e.touches;if(t.length===1){let r=canvas.getBoundingClientRect(),sx=t[0].clientX-r.left,sy=t[0].clientY-r.top;
+canvas.addEventListener('touchstart',e=>{e.preventDefault();hideCtx();if(layoutBarState.open&&!e.target.closest('#layoutBar'))closeLayoutBar();let t=e.touches;if(t.length===1){let r=canvas.getBoundingClientRect(),sx=t[0].clientX-r.left,sy=t[0].clientY-r.top;
 if(hitTestCursorHandle(sx,sy)){dragMode='cursor';dragState={active:true,moved:false};return;}
-let nid=hitTestNode(sx,sy);if(nid){dragMode='node_pending';dragPayload={id:nid,startSX:sx,startSY:sy};dragState={active:true,sx:t[0].clientX,sy:t[0].clientY,stx:cam.tx,sty:cam.ty,moved:false};longPressTimer=setTimeout(()=>{if(!dragState.moved&&dragMode==='node_pending'){dragMode='relDrag_ready';longPressTimer=setTimeout(()=>{if(!dragState.moved){dragMode='';dragState.active=false;handleCanvasRightClick(t[0].clientX,t[0].clientY,sx,sy);}},250);}},300);return;}
+let nid=hitTestNode(sx,sy);if(nid){dragMode='node_pending';dragPayload={id:nid,startSX:sx,startSY:sy};dragState={active:true,sx:t[0].clientX,sy:t[0].clientY,stx:cam.tx,sty:cam.ty,moved:false};longPressTimer=setTimeout(()=>{if(!dragState.moved&&dragMode==='node_pending'){dragMode='relDrag_ready';}},300);return;}
 let lh=hitTestLaneHeaderScreen(sx,sy);if(lh){dragMode='laneDrag_pending';dragPayload={id:lh.id};dragState={active:true,moved:false,sx:t[0].clientX,sy:t[0].clientY};longPressTimer=setTimeout(()=>{if(!dragState.moved){dragMode='';dragState.active=false;handleCanvasRightClick(t[0].clientX,t[0].clientY,sx,sy);}},500);return;}
 dragMode='pan';dragState={active:true,sx:t[0].clientX,sy:t[0].clientY,stx:cam.tx,sty:cam.ty,moved:false};
 }else if(t.length>=2){clearTimeout(longPressTimer);dragMode='pinch';let dx=t[1].clientX-t[0].clientX,dy=t[1].clientY-t[0].clientY;dragPayload={dist0:Math.hypot(dx,dy),zoom0:cam.zoom,mx0:(t[0].clientX+t[1].clientX)/2,my0:(t[0].clientY+t[1].clientY)/2};dragState={active:true,stx:cam.tx,sty:cam.ty,moved:false};}},{passive:false});
@@ -587,6 +588,7 @@ canvas.addEventListener('touchend',e=>{clearTimeout(longPressTimer);let prevMode
 if(wasTap&&e.changedTouches.length){let r=canvas.getBoundingClientRect();tapSX=e.changedTouches[0].clientX-r.left;tapSY=e.changedTouches[0].clientY-r.top;}
 if(dragMode==='node'&&dragPayload){let r=canvas.getBoundingClientRect(),last=e.changedTouches[0],w=screenToWorld(last.clientX-r.left,last.clientY-r.top);endNodeDrop(dragPayload.id,w);}
 if(dragMode==='relDrag'&&relDragState.active){document.getElementById('relDragHint').style.display='none';if(relDragState.toId)openQuickRelForm(relDragState.fromId,relDragState.toId);relDragState={active:false,fromId:null,toId:null,sx:0,sy:0};needsRender=true;}
+if(dragMode==='relDrag_ready'&&!dragState.moved&&dragPayload){let last=e.changedTouches[0];if(last)handleCanvasRightClick(last.clientX,last.clientY,last.clientX-canvas.getBoundingClientRect().left,last.clientY-canvas.getBoundingClientRect().top);}
 if(dragMode==='laneDrag'&&dragState.moved&&dragPayload){let r=canvas.getBoundingClientRect(),last=e.changedTouches[0];endLaneDrop(dragPayload.id,last.clientY-r.top);}else if(dragMode==='laneDrag')cancelChange();
 hideDragHud();dragMode='';dragPayload=null;if(e.touches.length===0)dragState.active=false;
 if(wasTap)handleCanvasClick(tapSX,tapSY);},{passive:false});
