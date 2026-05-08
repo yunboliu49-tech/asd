@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
-<title>创作对话工具 v3.1.51</title>
+<title>创作对话工具 v3.1.52</title>
 <style>
 
 :root{--bg-p:#151513;--bg-s:#1d1d1a;--bg-t:#282824;--tx-p:#e8e3d8;--tx-s:#b6afa2;--tx-m:#777065;--bd:#37362f;--ac:#78bfa6;--ach:#66ad95;--ac-soft:rgba(120,191,166,.14);--ok:#79c58e;--ok-soft:rgba(121,197,142,.16);--wn:#d6a85f;--wn-soft:rgba(214,168,95,.16);--dn:#d9827b;--dn-soft:rgba(217,130,123,.16);--purple:#b68ac8;--purple-soft:rgba(182,138,200,.14);--pink:#d887a8;--pink-soft:rgba(216,135,168,.16);--gold:#d6a85f;--gold-soft:rgba(214,168,95,.16);--indigo:#8d9cc8;--indigo-soft:rgba(141,156,200,.14);--orange:#d69363;--orange-soft:rgba(214,147,99,.16);--code-bg:rgba(0,0,0,.22);--mark-bg:rgba(214,168,95,.32);--ubg:#243a34;--abg:transparent;--ts:16px;--bs:14px;--fs:15px;--safe-t:env(safe-area-inset-top);--safe-b:env(safe-area-inset-bottom);--sw:260px;--r:4px;--mat-accent:#78bfa6}
@@ -752,14 +752,14 @@ html,body{overflow-x:hidden;max-width:100vw}
 </div></div></div>
 <!-- 素材编辑器 -->
 <div class="mat-app" id="matApp"></div>
-<div class="version">v3.1.51</div>
+<div class="version">v3.1.52</div>
 <div class="mo" id="modal"><div class="mo-box" id="moBox"><div class="mo-hdr"><h3 id="moTitle"></h3><button class="mo-cls" onclick="moClose()">×</button></div><div class="mo-body" id="moBody"></div><div class="mo-ftr" id="moFtr"></div></div></div>
 <div class="ctx" id="ctxMenu"></div>
 <div class="ctx" id="convMenu"></div>
 <div class="ctx" id="grpMenu"></div>
 <script>
 // ==================== 公共区 ====================
-const VER='3.1.51',RSN_F=['reasoning_content','reasoning','thinking','thought','inner_monologue'];
+const VER='3.1.52',RSN_F=['reasoning_content','reasoning','thinking','thought','inner_monologue'];
 let materials={chars:{},charOrder:[],rels:{},relIndex:[],apps:{},appOrder:[],appGroups:{},groupOrder:[],metaPrompts:{},metaOrder:[],appKeywords:{},_sourceFile:'',_importedAt:'',_savedAt:''};
 let storyData={timelineYears:[],stories:[]},tlPointsChat=[];
 let localMeta={},folderH=null,isMobile=false,kbOn=false;
@@ -939,6 +939,81 @@ function loadMatCache(){try{const d=localStorage.getItem('matCache');if(d){const
 
 //== ensureMatFields ==//
 function ensureMatFields(){if(!materials.chars)materials.chars={};if(!materials.charOrder)materials.charOrder=[];if(!materials.rels)materials.rels={};if(!materials.relIndex)materials.relIndex=[];if(!materials.apps)materials.apps={};if(!materials.appOrder)materials.appOrder=[];if(!materials.appGroups)materials.appGroups={};if(!materials.groupOrder)materials.groupOrder=[];if(!materials.metaPrompts)materials.metaPrompts={};if(!materials.metaOrder)materials.metaOrder=[];if(!materials.appKeywords)materials.appKeywords={}}
+
+//== analyzeMaterialsMerge ==//
+function analyzeMaterialsMerge(local,imp){
+const ef=m=>{if(!m.chars)m.chars={};if(!m.charOrder)m.charOrder=[];if(!m.rels)m.rels={};if(!m.relIndex)m.relIndex=[];if(!m.apps)m.apps={};if(!m.appOrder)m.appOrder=[];if(!m.appGroups)m.appGroups={};if(!m.groupOrder)m.groupOrder=[];if(!m.metaPrompts)m.metaPrompts={};if(!m.metaOrder)m.metaOrder=[];if(!m.appKeywords)m.appKeywords={}};
+ef(local);ef(imp);
+const r={chars:{added:[],same:[],conflict:[]},apps:{added:[],same:[],conflict:[]},meta:{added:[],same:[],conflict:[]},rels:{added:[],same:[],conflict:[]},localOnly:{chars:[],apps:[],meta:[],rels:[]},hasConflict:false};
+imp.charOrder.forEach(n=>{const ic=imp.chars[n];if(!ic)return;const lc=local.chars[n];if(!lc){r.chars.added.push({name:n});return}if(lc.d===ic.d&&lc.s===ic.s&&lc.h===ic.h)r.chars.same.push(n);else{r.chars.conflict.push({name:n});r.hasConflict=true}});
+local.charOrder.forEach(n=>{if(!imp.chars[n])r.localOnly.chars.push(n)});
+imp.appOrder.forEach(n=>{const ic=imp.apps[n];if(ic===undefined)return;const lc=local.apps[n];if(lc===undefined){r.apps.added.push({name:n});return}if(lc===ic)r.apps.same.push(n);else{r.apps.conflict.push({name:n});r.hasConflict=true}});
+local.appOrder.forEach(n=>{if(imp.apps[n]===undefined)r.localOnly.apps.push(n)});
+imp.metaOrder.forEach(n=>{const ic=imp.metaPrompts[n];if(ic===undefined)return;const lc=local.metaPrompts[n];if(lc===undefined){r.meta.added.push({name:n});return}if(lc===ic)r.meta.same.push(n);else{r.meta.conflict.push({name:n});r.hasConflict=true}});
+local.metaOrder.forEach(n=>{if(imp.metaPrompts[n]===undefined)r.localOnly.meta.push(n)});
+imp.relIndex.forEach(k=>{const ir=imp.rels[k];if(!ir)return;const lr=local.rels[k];if(!lr){r.rels.added.push({key:k});return}if(lr.d===ir.d)r.rels.same.push(k);else{r.rels.conflict.push({key:k});r.hasConflict=true}});
+local.relIndex.forEach(k=>{if(!imp.rels[k])r.localOnly.rels.push(k)});
+return r}
+
+//== showMaterialsMergeUI ==//
+function showMaterialsMergeUI(analysis,imp){
+return new Promise(resolve=>{
+window._mmResolve=resolve;window._mmAnalysis=analysis;window._mmImp=imp;
+const at=analysis;
+const addN=at.chars.added.length+at.apps.added.length+at.meta.added.length+at.rels.added.length;
+const sameN=at.chars.same.length+at.apps.same.length+at.meta.same.length+at.rels.same.length;
+const confN=at.chars.conflict.length+at.apps.conflict.length+at.meta.conflict.length+at.rels.conflict.length;
+const loN=at.localOnly.chars.length+at.localOnly.apps.length+at.localOnly.meta.length+at.localOnly.rels.length;
+let h='<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px">';
+h+=`<div style="padding:8px;background:var(--ok-soft);border-radius:var(--r);text-align:center"><div style="font-size:11px;color:var(--tx-m)">🟢 新增</div><div style="font-size:18px;font-weight:700;color:var(--ok)">${addN}</div></div>`;
+h+=`<div style="padding:8px;background:var(--wn-soft);border-radius:var(--r);text-align:center"><div style="font-size:11px;color:var(--tx-m)">🟡 冲突</div><div style="font-size:18px;font-weight:700;color:var(--wn)">${confN}</div></div>`;
+h+=`<div style="padding:8px;background:var(--bg-t);border-radius:var(--r);text-align:center"><div style="font-size:11px;color:var(--tx-m)">⚪ 相同</div><div style="font-size:18px;font-weight:700">${sameN}</div></div>`;
+h+=`<div style="padding:8px;background:var(--bg-t);border-radius:var(--r);text-align:center"><div style="font-size:11px;color:var(--tx-m)">🔵 仅本地</div><div style="font-size:18px;font-weight:700">${loN}</div></div></div>`;
+if(addN){h+=`<div style="margin-bottom:10px;padding:8px;background:var(--ok-soft);border-radius:var(--r);border-left:3px solid var(--ok)"><div style="font-weight:600;margin-bottom:4px;font-size:13px">🟢 将新增 (${addN})</div><div style="font-size:12px;color:var(--tx-s)">`;if(at.chars.added.length)h+='角色: '+at.chars.added.map(x=>esc(x.name)).join('、')+'<br>';if(at.apps.added.length)h+='附录: '+at.apps.added.map(x=>esc(x.name)).join('、')+'<br>';if(at.meta.added.length)h+='元提示词: '+at.meta.added.map(x=>esc(x.name)).join('、')+'<br>';if(at.rels.added.length)h+='关系: '+at.rels.added.map(x=>esc(x.key)).join('、');h+='</div></div>'}
+if(confN){
+h+=`<div style="margin-bottom:8px;display:flex;gap:4px"><button class="bbn" onclick="mmSelectAll('local')">全部用本地</button><button class="bbn" onclick="mmSelectAll('imported')">全部用导入</button></div>`;
+const rcg=(type,label,items,lpv,ipv)=>{if(!items.length)return'';let ch=`<div style="font-weight:600;font-size:12px;margin:8px 0 4px;color:var(--wn)">${label} (${items.length})</div>`;items.forEach((item,i)=>{const name=item.name||item.key;const id='mc_'+type+'_'+i;ch+=`<div style="padding:8px;background:var(--bg-t);border-radius:var(--r);margin-bottom:4px;border-left:3px solid var(--wn)"><div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><span style="font-weight:600;flex:1;font-size:13px">${esc(name)}</span><button class="bbn" onclick="mmPvConflict('${type}',${i})" style="font-size:10px">👁对比</button></div><div style="display:flex;gap:4px"><label style="flex:1;display:flex;align-items:center;gap:4px;padding:6px 8px;background:var(--bg-s);border:2px solid var(--bd);border-radius:var(--r);cursor:pointer;font-size:12px"><input type="radio" name="${id}" value="local" checked style="width:14px;height:14px;accent-color:var(--ac)"><div style="flex:1"><div style="font-weight:500">📌 本地</div><div style="font-size:10px;color:var(--tx-m);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:120px">${esc(lpv(item))}</div></div></label><label style="flex:1;display:flex;align-items:center;gap:4px;padding:6px 8px;background:var(--bg-s);border:2px solid var(--bd);border-radius:var(--r);cursor:pointer;font-size:12px"><input type="radio" name="${id}" value="imported" style="width:14px;height:14px;accent-color:var(--wn)"><div style="flex:1"><div style="font-weight:500">📥 导入</div><div style="font-size:10px;color:var(--tx-m);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:120px">${esc(ipv(item))}</div></div></label></div></div>`});return ch};
+h+=rcg('chars','👥 角色',at.chars.conflict,x=>(materials.chars[x.name]?.d||'').substring(0,50),x=>(imp.chars[x.name]?.d||'').substring(0,50));
+h+=rcg('apps','📚 附录',at.apps.conflict,x=>(materials.apps[x.name]||'').substring(0,50),x=>(imp.apps[x.name]||'').substring(0,50));
+h+=rcg('meta','🎯 元提示词',at.meta.conflict,x=>(materials.metaPrompts[x.name]||'').substring(0,50),x=>(imp.metaPrompts[x.name]||'').substring(0,50));
+h+=rcg('rels','🔗 关系',at.rels.conflict,x=>(materials.rels[x.key]?.d||'').substring(0,50),x=>(imp.rels[x.key]?.d||'').substring(0,50))}
+if(loN)h+=`<div style="margin-top:10px;padding:8px;background:var(--bg-t);border-radius:var(--r)"><div style="font-size:12px;color:var(--tx-m)">🔵 仅本地有 (${loN}) — 将保留</div></div>`;
+showMoFull('📋 素材合并',h,`<button class="mo-btn sec" onclick="window._mmResolve(null);hideMo()">取消</button><button class="mo-btn pri" onclick="doMmConfirm()">✅ 确认合并</button>`)})}
+
+//== mmSelectAll ==//
+function mmSelectAll(choice){document.querySelectorAll('[name^="mc_"]').forEach(r=>{if(r.value===choice)r.checked=true})}
+
+//== mmPvConflict ==//
+function mmPvConflict(type,idx){
+const a=window._mmAnalysis,imp=window._mmImp;let name,lt,it;
+if(type==='chars'){const item=a.chars.conflict[idx];name=item.name;const lc=materials.chars[name]||{},ic=imp.chars[name]||{};lt=`性别:${lc.g||''}\n\n详细人设:\n${lc.d||''}\n\n简要:\n${lc.s||''}${lc.h?'\n\nH:\n'+lc.h:''}`;it=`性别:${ic.g||''}\n\n详细人设:\n${ic.d||''}\n\n简要:\n${ic.s||''}${ic.h?'\n\nH:\n'+ic.h:''}`}
+else if(type==='apps'){const item=a.apps.conflict[idx];name=item.name;lt=materials.apps[name]||'';it=imp.apps[name]||''}
+else if(type==='meta'){const item=a.meta.conflict[idx];name=item.name;lt=materials.metaPrompts[name]||'';it=imp.metaPrompts[name]||''}
+else if(type==='rels'){const item=a.rels.conflict[idx];name=item.key;lt=materials.rels[name]?.d||'';it=imp.rels[name]?.d||''}
+pushMo('👁 对比: '+name,`<div style="display:flex;gap:8px;flex-wrap:wrap"><div style="flex:1;min-width:200px"><div style="font-weight:600;margin-bottom:4px;font-size:12px;color:var(--ac)">📌 本地</div><div class="pv-ct" style="max-height:40vh">${esc(lt)}</div></div><div style="flex:1;min-width:200px"><div style="font-weight:600;margin-bottom:4px;font-size:12px;color:var(--wn)">📥 导入</div><div class="pv-ct" style="max-height:40vh">${esc(it)}</div></div></div>`,`<button class="mo-btn pri" onclick="popMo()">返回</button>`)}
+
+//== doMmConfirm ==//
+function doMmConfirm(){
+const a=window._mmAnalysis,d={chars:{},apps:{},meta:{},rels:{}};
+a.chars.conflict.forEach((item,i)=>{const r=document.querySelector(`input[name="mc_chars_${i}"]:checked`);d.chars[item.name]=r?.value||'local'});
+a.apps.conflict.forEach((item,i)=>{const r=document.querySelector(`input[name="mc_apps_${i}"]:checked`);d.apps[item.name]=r?.value||'local'});
+a.meta.conflict.forEach((item,i)=>{const r=document.querySelector(`input[name="mc_meta_${i}"]:checked`);d.meta[item.name]=r?.value||'local'});
+a.rels.conflict.forEach((item,i)=>{const r=document.querySelector(`input[name="mc_rels_${i}"]:checked`);d.rels[item.key]=r?.value||'local'});
+hideMo();window._mmResolve(d)}
+
+//== executeMaterialsMerge ==//
+function executeMaterialsMerge(analysis,decisions,imp){
+const dc=v=>JSON.parse(JSON.stringify(v));
+analysis.chars.added.forEach(({name})=>{materials.chars[name]=dc(imp.chars[name]);if(!materials.charOrder.includes(name))materials.charOrder.push(name)});
+analysis.chars.conflict.forEach(({name})=>{if((decisions.chars||{})[name]==='imported'){const ic=dc(imp.chars[name]);materials.chars[name]=ic}});
+analysis.apps.added.forEach(({name})=>{materials.apps[name]=imp.apps[name];if(!materials.appOrder.includes(name))materials.appOrder.push(name);if(imp.appKeywords?.[name])materials.appKeywords[name]=[...imp.appKeywords[name]]});
+analysis.apps.conflict.forEach(({name})=>{if((decisions.apps||{})[name]==='imported'){materials.apps[name]=imp.apps[name];if(imp.appKeywords?.[name])materials.appKeywords[name]=[...imp.appKeywords[name]];else delete materials.appKeywords[name]}});
+analysis.meta.added.forEach(({name})=>{materials.metaPrompts[name]=imp.metaPrompts[name];if(!materials.metaOrder.includes(name))materials.metaOrder.push(name)});
+analysis.meta.conflict.forEach(({name})=>{if((decisions.meta||{})[name]==='imported')materials.metaPrompts[name]=imp.metaPrompts[name]});
+analysis.rels.added.forEach(({key})=>{materials.rels[key]=dc(imp.rels[key]);if(!materials.relIndex.includes(key))materials.relIndex.push(key)});
+analysis.rels.conflict.forEach(({key})=>{if((decisions.rels||{})[key]==='imported')materials.rels[key]=dc(imp.rels[key])});
+(imp.groupOrder||[]).forEach(gn=>{if(!materials.groupOrder.includes(gn)){materials.groupOrder.push(gn);materials.appGroups[gn]=imp.appGroups[gn]||[]}else{const local=materials.appGroups[gn]||[];(imp.appGroups[gn]||[]).forEach(a=>{if(!local.includes(a)&&materials.appOrder.includes(a))local.push(a)});materials.appGroups[gn]=local}});
+materials._savedAt=new Date().toISOString()}
 
 //== buildTxt ==//
 function buildTxt(){
@@ -3620,7 +3695,21 @@ if(impQP&&gct?.quickPhrases?.length)gct.quickPhrases.forEach(qp=>{if(!quickPhras
 if(impPrices&&gct){if(gct.priceTable){const pr=mergePriceTable(priceTable,gct.priceTable);priceTable=pr.items;toast(`💰 价格表: 新增${pr.added} 更新${pr.updated}`)}if(gct.costSettings)costSettings={...costSettings,...gct.costSettings};updateCostDisplay()}
 if(impCostLogs&&window._impCostLogs?.length){const cr=mergeCostLogs(costLogs,window._impCostLogs);costLogs=cr.items;await saveCostLogs();toast(`🧾 费用日志: 新增${cr.added} 跳过${cr.skipped}`)}
 if(gct?.localMeta&&Object.keys(gct.localMeta).length){Object.entries(gct.localMeta).forEach(([k,v])=>{materials.metaPrompts[k]=v;if(!materials.metaOrder.includes(k))materials.metaOrder.push(k)});await saveMats()}
-if(impMaterials&&gct?.materials){materials=gct.materials;await saveMats();if(gct.matProjects&&folderH){try{const vd=await folderH.getDirectoryHandle('mat_versions',{create:true});const pf=await vd.getFileHandle('_projects.json',{create:true});const w=await pf.createWritable();await w.write(JSON.stringify(gct.matProjects,null,2));await w.close();if(gct.matVersionFiles){for(const[fn,txt]of Object.entries(gct.matVersionFiles)){const f=await vd.getFileHandle(fn,{create:true});const w2=await f.createWritable();await w2.write(txt);await w2.close()}}}catch(e){}}}
+if(impMaterials&&gct?.materials){
+const impMat=JSON.parse(JSON.stringify(gct.materials));
+ensureMatFields();
+const mmA=analyzeMaterialsMerge(materials,impMat);
+const mmConfN=mmA.chars.conflict.length+mmA.apps.conflict.length+mmA.meta.conflict.length+mmA.rels.conflict.length;
+const mmAddN=mmA.chars.added.length+mmA.apps.added.length+mmA.meta.added.length+mmA.rels.added.length;
+let mmDo=true,mmD={};
+if(mmConfN>0){mmD=await showMaterialsMergeUI(mmA,impMat);if(mmD===null)mmDo=false}
+if(mmDo){
+executeMaterialsMerge(mmA,mmD||{},impMat);
+await saveMats();
+const impC=Object.values(mmD.chars||{}).filter(v=>v==='imported').length+Object.values(mmD.apps||{}).filter(v=>v==='imported').length+Object.values(mmD.meta||{}).filter(v=>v==='imported').length+Object.values(mmD.rels||{}).filter(v=>v==='imported').length;
+const keepC=mmConfN-impC;
+toast(`素材合并: 新增${mmAddN} 冲突${mmConfN}(用导入${impC}/用本地${keepC})`);
+if(gct.matProjects&&folderH){try{const vd=await folderH.getDirectoryHandle('mat_versions',{create:true});const pf=await vd.getFileHandle('_projects.json',{create:true});const w=await pf.createWritable();await w.write(JSON.stringify(gct.matProjects,null,2));await w.close();if(gct.matVersionFiles){for(const[fn,txt]of Object.entries(gct.matVersionFiles)){const f=await vd.getFileHandle(fn,{create:true});const w2=await f.createWritable();await w2.write(txt);await w2.close()}}}catch(e){}}}}
 if(impStoryData&&gct?.storyData){storyData=gct.storyData;buildTLPoints();await saveStoryFile()}
 saveCfg();sortConvList();renderConvList();if(curConv)renderMsgs();importLock=false;hideMo();ok(`导入了 ${rc} 个对话`);if(isMobile)closeSB()}
 
