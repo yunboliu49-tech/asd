@@ -974,7 +974,67 @@ function starResize(){let wrap=document.getElementById('canvasWrap');starW=wrap.
 function initStarThree(){let sc=document.getElementById('starCanvas');starW=sc.parentElement.clientWidth;starH=sc.parentElement.clientHeight;starRenderer=new THREE.WebGLRenderer({canvas:sc,antialias:true,alpha:false});starRenderer.setSize(starW,starH);starRenderer.setPixelRatio(Math.min(window.devicePixelRatio,2));starRenderer.setClearColor(themeMode==='light'?0xf1f5f9:0x050510,1);starScene=new THREE.Scene();starCamera=new THREE.PerspectiveCamera(55,starW/starH,1,5000);starUpdateCamera();let ct=4000,sp=new Float32Array(ct*3);for(let i=0;i<ct;i++){sp[i*3]=(Math.random()-.5)*3500;sp[i*3+1]=(Math.random()-.5)*3500;sp[i*3+2]=(Math.random()-.5)*3500;}let sg=new THREE.BufferGeometry();sg.setAttribute('position',new THREE.BufferAttribute(sp,3));let sm=new THREE.PointsMaterial({color:0xffffff,size:1.2,transparent:true,opacity:.6,sizeAttenuation:true,depthWrite:false});starField=new THREE.Points(sg,sm);starScene.add(starField);starScene.add(new THREE.AmbientLight(0x404060,.5));starBindEvents(sc);}
 
 //== starCalcCharPos ==//
-function starCalcCharPos(c){let years=appData.years||['A'],lanes=appData.lanes||[],totalMonths=years.length*12,go=getMonthGlobalOrder(c.intro);let li=lanes.findIndex(l=>l.id===c.lane),lc=Math.max(1,lanes.length);let t=go/Math.max(1,totalMonths-1);let yrs=years.length;let angle=t*yrs*Math.PI*2;let minR=80,maxR=600,radius=minR+(maxR-minR)*Math.pow(t,1.8);let height=(t-.5)*800;let bx=Math.cos(angle)*radius,bz=Math.sin(angle)*radius,by=height;let laneOffset=(li>=0?(li/(lc-1||1)-.5):0)*80;bx+=Math.cos(angle)*laneOffset;bz+=Math.sin(angle)*laneOffset;return{x:bx+hashRange(c.id+'x',-40,40),y:by+hashRange(c.id+'y',-30,30),z:bz+hashRange(c.id+'z',-40,40)};}
+function starCalcCharPos(c){
+let years=appData.years||['A'],lanes=appData.lanes||[],
+    totalMonths=years.length*12,
+    go=getMonthGlobalOrder(c.intro),
+    chars=appData.characters||[],
+    charCount=Math.max(chars.length,8);
+let li=lanes.findIndex(l=>l.id===c.lane),
+    lc=Math.max(1,lanes.length);
+let t=go/Math.max(1,totalMonths-1);
+
+// fibonacci sphere: even distribution across sphere surface
+let idx=chars.indexOf(c);
+if(idx<0)idx=hashStr(c.id)%charCount;
+let golden=(1+Math.sqrt(5))/2;
+let theta=2*Math.PI*idx/golden;
+let phi=Math.acos(1-2*(idx+0.5)/charCount);
+
+// base radius scales with sqrt of char count for consistent visual density
+let baseR=Math.max(280,130*Math.pow(charCount,0.48));
+
+// lane creates radial shells (inner lanes closer, outer lanes further)
+let laneRatio=(li>=0?(li+1)/(lc+1):0.5);
+let rLayer=0.7+laneRatio*0.55;
+
+// weight: heavier characters slightly more central
+let w=Math.min(5,c.weight||1);
+let weightPull=1-Math.min(0.25,w*0.05);
+
+let r=baseR*rLayer*weightPull;
+
+// organic radius variation per character
+r*=hashRange(c.id+'rv',0.82,1.18);
+
+// spherical to cartesian, flatten Y for nebula/ellipsoid shape
+let x=r*Math.sin(phi)*Math.cos(theta);
+let z=r*Math.sin(phi)*Math.sin(theta);
+let y=r*Math.cos(phi)*0.55;
+
+// time creates gentle vertical drift (early=bottom, late=top)
+y+=(t-0.5)*baseR*0.35;
+
+// time also adds subtle spiral twist
+let spiralAngle=t*Math.PI*0.8;
+let spiralR=baseR*0.08;
+x+=Math.cos(spiralAngle+theta*0.3)*spiralR*(t-0.5);
+z+=Math.sin(spiralAngle+theta*0.3)*spiralR*(t-0.5);
+
+// group clustering: same group nudged in same direction
+let gAngle=hashRange(c.group+'ga',0,Math.PI*2);
+let gElev=hashRange(c.group+'ge',-0.5,0.5);
+let gR=hashRange(c.group+'gr',25,55+charCount*0.3);
+x+=Math.cos(gAngle)*gR;
+z+=Math.sin(gAngle)*gR;
+y+=gElev*gR*0.5;
+
+// final organic jitter
+x+=hashRange(c.id+'jx',-35,35);
+y+=hashRange(c.id+'jy',-30,30);
+z+=hashRange(c.id+'jz',-35,35);
+
+return{x,y,z};}
 
 //== starMakeGlowTexture ==//
 function starMakeGlowTexture(size,color){let cv=document.createElement('canvas');cv.width=cv.height=size;let ct2=cv.getContext('2d'),rgb=hexToRgb(color);let grad=ct2.createRadialGradient(size/2,size/2,0,size/2,size/2,size/2);let R=Math.round(rgb.r*255),G=Math.round(rgb.g*255),B=Math.round(rgb.b*255);grad.addColorStop(0,'rgba('+R+','+G+','+B+',1)');grad.addColorStop(.08,'rgba(255,255,255,0.95)');grad.addColorStop(.15,'rgba('+R+','+G+','+B+',0.95)');grad.addColorStop(.35,'rgba('+R+','+G+','+B+',0.55)');grad.addColorStop(.6,'rgba('+R+','+G+','+B+',0.18)');grad.addColorStop(1,'rgba('+R+','+G+','+B+',0)');ct2.fillStyle=grad;ct2.fillRect(0,0,size,size);return new THREE.CanvasTexture(cv);}
@@ -1007,7 +1067,12 @@ function starApplyPan(sdx,sdy){let sc2=starCamDist*.002;let rx=Math.sin(starCamT
 function starBindEvents(sc){sc.addEventListener('mousedown',e=>{if(e.button===1){e.preventDefault();starMidDrag={active:true,sx:e.clientX,sy:e.clientY};return;}starDragActive=true;starDragMoved=false;starDragSX=e.clientX;starDragSY=e.clientY;starDragTheta=starCamTheta;starDragPhi=starCamPhi;});window.addEventListener('mousemove',e=>{if(!starMode)return;if(starMidDrag.active){starApplyPan(e.clientX-starMidDrag.sx,e.clientY-starMidDrag.sy);starMidDrag.sx=e.clientX;starMidDrag.sy=e.clientY;return;}if(!starDragActive)return;let dx2=e.clientX-starDragSX,dy2=e.clientY-starDragSY;if(Math.abs(dx2)+Math.abs(dy2)>4)starDragMoved=true;starCamTheta=starDragTheta-dx2*.005;starCamPhi=Math.max(.1,Math.min(Math.PI-.1,starDragPhi+dy2*.005));starUpdateCamera();});window.addEventListener('mouseup',()=>{starDragActive=false;starMidDrag.active=false;});sc.addEventListener('click',e=>{if(!starMode||starDragMoved)return;let rect=sc.getBoundingClientRect(),sx=e.clientX-rect.left,sy=e.clientY-rect.top;let mouse=new THREE.Vector2((sx/starW)*2-1,-(sy/starH)*2+1);let ray=new THREE.Raycaster();ray.setFromCamera(mouse,starCamera);let hits=ray.intersectObjects(starCharSprites);if(hits.length){starHighlightChar(hits[0].object.userData.charId);starShowPopup(hits[0].object.userData.charId,sx,sy);}else starHidePopup();});sc.addEventListener('wheel',e=>{if(!starMode)return;e.preventDefault();starCamDist*=e.deltaY>0?1.08:.92;starCamDist=Math.max(100,Math.min(3000,starCamDist));starUpdateCamera();},{passive:false});sc.addEventListener('touchstart',e=>{e.preventDefault();let t=e.touches;if(t.length===1){starDragActive=true;starDragMoved=false;starDragSX=t[0].clientX;starDragSY=t[0].clientY;starDragTheta=starCamTheta;starDragPhi=starCamPhi;}else if(t.length>=2){starDragActive=false;starPinchActive=true;starPinchDist0=Math.hypot(t[1].clientX-t[0].clientX,t[1].clientY-t[0].clientY);starPinchCamDist0=starCamDist;}},{passive:false});sc.addEventListener('touchmove',e=>{e.preventDefault();if(starPinchActive&&e.touches.length>=2){let t=e.touches,nd=Math.hypot(t[1].clientX-t[0].clientX,t[1].clientY-t[0].clientY);if(starPinchDist0>0)starCamDist=Math.max(100,Math.min(3000,starPinchCamDist0*(starPinchDist0/nd)));starUpdateCamera();}else if(starDragActive&&e.touches.length===1){let dx2=e.touches[0].clientX-starDragSX,dy2=e.touches[0].clientY-starDragSY;if(Math.abs(dx2)+Math.abs(dy2)>4)starDragMoved=true;starCamTheta=starDragTheta-dx2*.005;starCamPhi=Math.max(.1,Math.min(Math.PI-.1,starDragPhi+dy2*.005));starUpdateCamera();}},{passive:false});sc.addEventListener('touchend',e=>{if(e.touches.length===0){if(!starDragMoved&&e.changedTouches.length){let t=e.changedTouches[0],rect=sc.getBoundingClientRect();let sx=t.clientX-rect.left,sy=t.clientY-rect.top;let mouse=new THREE.Vector2((sx/starW)*2-1,-(sy/starH)*2+1);let ray=new THREE.Raycaster();ray.setFromCamera(mouse,starCamera);let hits=ray.intersectObjects(starCharSprites);if(hits.length){starHighlightChar(hits[0].object.userData.charId);starShowPopup(hits[0].object.userData.charId,sx,sy);}else starHidePopup();}starDragActive=false;starPinchActive=false;}},{passive:false});}
 
 //== starResetCam ==//
-function starResetCam(){starCamTheta=0;starCamPhi=Math.PI/3;starCamDist=900;if(starCamTargetDefault)starCamTarget={...starCamTargetDefault};starUpdateCamera();}
+function starResetCam(){starCamTheta=0.3;starCamPhi=Math.PI*0.38;
+// auto distance based on character count
+let charCount=appData?appData.characters.length:20;
+let baseR=Math.max(280,130*Math.pow(Math.max(charCount,8),0.48));
+starCamDist=Math.max(500,baseR*2.8);
+if(starCamTargetDefault)starCamTarget={...starCamTargetDefault};starUpdateCamera();}
 
 //== starToggleNames ==//
 function starToggleNames(){starShowNames=!starShowNames;starLabelSprites.forEach(s=>s.visible=starShowNames);let b=document.getElementById('btnStarNames');if(b)b.classList.toggle('active',starShowNames);}
