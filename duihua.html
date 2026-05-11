@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
-<title>创作对话工具 v3.1.57</title>
+<title>创作对话工具 v3.1.59</title>
 <style>
 
 :root{--bg-p:#151513;--bg-s:#1d1d1a;--bg-t:#282824;--tx-p:#e8e3d8;--tx-s:#b6afa2;--tx-m:#777065;--bd:#37362f;--ac:#78bfa6;--ach:#66ad95;--ac-soft:rgba(120,191,166,.14);--ok:#79c58e;--ok-soft:rgba(121,197,142,.16);--wn:#d6a85f;--wn-soft:rgba(214,168,95,.16);--dn:#d9827b;--dn-soft:rgba(217,130,123,.16);--purple:#b68ac8;--purple-soft:rgba(182,138,200,.14);--pink:#d887a8;--pink-soft:rgba(216,135,168,.16);--gold:#d6a85f;--gold-soft:rgba(214,168,95,.16);--indigo:#8d9cc8;--indigo-soft:rgba(141,156,200,.14);--orange:#d69363;--orange-soft:rgba(214,147,99,.16);--code-bg:rgba(0,0,0,.22);--mark-bg:rgba(214,168,95,.32);--ubg:#243a34;--abg:transparent;--ts:16px;--bs:14px;--fs:15px;--safe-t:env(safe-area-inset-top);--safe-b:env(safe-area-inset-bottom);--sw:260px;--r:4px;--mat-accent:#78bfa6}
@@ -714,7 +714,7 @@ html,body{overflow-x:hidden;max-width:100vw}
 </div>
 <div style="display:flex;gap:4px;margin-bottom:4px"><button class="tb" style="flex-shrink:0" onclick="showExport()">📤导出</button><button class="tb" style="flex:1" onclick="showImport()">📥导入</button></div>
 </div>
-<div style="display:flex;gap:4px;margin-bottom:5px"><button class="tb" style="flex-shrink:0" onclick="exportMovePack()">🚚搬家</button><button class="tb" style="flex-shrink:0" onclick="selectMoveFolder()">📂</button><button class="ws-sb-entry" onclick="showWorkspaceMgr()" style="flex:1;padding:5px 7px;margin-bottom:0">🔖 工作台</button></div>
+<div style="display:flex;gap:4px;margin-bottom:5px"><button class="tb" style="flex-shrink:0" onclick="exportMovePack()">🚚搬家</button><button class="ws-sb-entry" onclick="showWorkspaceMgr()" style="flex:1;padding:5px 7px;margin-bottom:0">🔖 工作台</button></div>
 <button class="new-btn" onclick="createConv()" style="padding:12px;font-size:15px">+ 新对话</button>
 </div></div>
 <div class="resize-h" id="resizeH"></div>
@@ -751,14 +751,14 @@ html,body{overflow-x:hidden;max-width:100vw}
 </div></div></div>
 <!-- 素材编辑器 -->
 <div class="mat-app" id="matApp"></div>
-<div class="version">v3.1.57</div>
+<div class="version">v3.1.59</div>
 <div class="mo" id="modal"><div class="mo-box" id="moBox"><div class="mo-hdr"><h3 id="moTitle"></h3><button class="mo-cls" onclick="moClose()">×</button></div><div class="mo-body" id="moBody"></div><div class="mo-ftr" id="moFtr"></div></div></div>
 <div class="ctx" id="ctxMenu"></div>
 <div class="ctx" id="convMenu"></div>
 <div class="ctx" id="grpMenu"></div>
 <script>
 // ==================== 公共区 ====================
-const VER='3.1.57',RSN_F=['reasoning_content','reasoning','thinking','thought','inner_monologue'];
+const VER='3.1.59',RSN_F=['reasoning_content','reasoning','thinking','thought','inner_monologue'];
 let materials={chars:{},charOrder:[],rels:{},relIndex:[],apps:{},appOrder:[],appGroups:{},groupOrder:[],metaPrompts:{},metaOrder:[],appKeywords:{},_sourceFile:'',_importedAt:'',_savedAt:''};
 let storyData={timelineYears:[],stories:[]},tlPointsChat=[];
 let localMeta={},folderH=null,isMobile=false,kbOn=false;
@@ -1471,11 +1471,24 @@ return `chattool_${dev}_${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDat
 //== buildMovePack ==//
 async function buildMovePack(){
 const targets=[];
-for(const m of convList){
+const total=convList.length;
+const statusEl=document.getElementById('mvStatus');
+const progFill=document.querySelector('#modal .prog-fill');
+for(let i=0;i<total;i++){
+const m=convList[i];
 const c=m.id===curConvId&&curConv?curConv:await loadConvFull(m.id);
-if(c)targets.push(c)
+if(c)targets.push(c);
+if(i%3===0||i===total-1){
+const pct=Math.round((i+1)/total*80);
+if(statusEl)statusEl.textContent=`打包对话 ${i+1}/${total}...`;
+if(progFill)progFill.style.width=pct+'%';
+await new Promise(r=>setTimeout(r,0))
+}
 }
 if(!targets.length)throw new Error('无对话可导出');
+if(statusEl)statusEl.textContent='生成JSON...';
+if(progFill)progFill.style.width='85%';
+await new Promise(r=>setTimeout(r,0));
 const d={'__exported_items':['conversations'],'__exported_at':new Date().toISOString(),configVersion:13,'chat-sessions-list':[]};
 const ct={version:VER,apiConfigs,starredModels,groups,params,uiSettings,shortcuts,curApiId,curModel,quickPhrases,localMeta,priceTable,costSettings,materials,storyData};
 if(folderH){
@@ -1504,6 +1517,9 @@ msgs.push({id:msg.id,role:msg.role,contentParts:cp,timestamp:msg.timestamp?new D
 });
 d[`session:${conv.id}`]={id:conv.id,name:conv.name,type:'chat',starred:conv.pinned||false,messages:msgs,messageForksHash:{},_chatTool:{materialConfig:conv.materialConfig,tempAppendices:conv.tempAppendices||[],groupId:conv.groupId||'_default',convParams:conv.convParams||{},foldGroups:conv.foldGroups||[],foldedMsgIds:conv.foldedMsgIds||[],lockedModel:conv.lockedModel||null}}
 });
+if(statusEl)statusEl.textContent='序列化...';
+if(progFill)progFill.style.width='92%';
+await new Promise(r=>setTimeout(r,0));
 return{fileName:getMovePackFileName(),text:JSON.stringify(d,null,2)}
 }
 
@@ -1523,8 +1539,9 @@ if(!folderH&&!convList.length){toast('请先连接/导入数据');return}
 showMo('🚚 生成搬家包',`<div style="text-align:center;padding:20px"><div id="mvStatus">正在打包全部对话、设置、素材、剧情和费用日志...</div><div class="prog-bar"><div class="prog-fill" style="width:45%"></div></div></div>`,'');
 await new Promise(r=>setTimeout(r,30));
 const pack=await buildMovePack();
-// 手机端优先用 share（.txt后缀绕过限制）
-if(isMobile&&navigator.share){
+// 手机端：share(.txt) → 普通下载
+if(isMobile){
+if(navigator.share){
 const shareName=pack.fileName.replace(/\.json$/,'.txt');
 const file=new File([pack.text],shareName,{type:'text/plain'});
 if(!navigator.canShare||navigator.canShare({files:[file]})){
@@ -1535,10 +1552,15 @@ toast('✅ 搬家包已分享');
 return
 }catch(e){
 if(e.name==='AbortError'){toast('已取消');return}
-// share失败，继续走下面的逻辑
 }
 }
 }
+hideMo();
+dl(pack.fileName,pack.text,'application/json');
+toast('✓ 已下载搬家包');
+return
+}
+// 桌面端：写入搬家文件夹 → 普通下载
 const ready=await getMoveFolderReady();
 if(!ready.ok){
 hideMo();
