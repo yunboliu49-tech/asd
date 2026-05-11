@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
-<title>创作对话工具 v3.1.59</title>
+<title>创作对话工具 v3.1.60</title>
 <style>
 
 :root{--bg-p:#151513;--bg-s:#1d1d1a;--bg-t:#282824;--tx-p:#e8e3d8;--tx-s:#b6afa2;--tx-m:#777065;--bd:#37362f;--ac:#78bfa6;--ach:#66ad95;--ac-soft:rgba(120,191,166,.14);--ok:#79c58e;--ok-soft:rgba(121,197,142,.16);--wn:#d6a85f;--wn-soft:rgba(214,168,95,.16);--dn:#d9827b;--dn-soft:rgba(217,130,123,.16);--purple:#b68ac8;--purple-soft:rgba(182,138,200,.14);--pink:#d887a8;--pink-soft:rgba(216,135,168,.16);--gold:#d6a85f;--gold-soft:rgba(214,168,95,.16);--indigo:#8d9cc8;--indigo-soft:rgba(141,156,200,.14);--orange:#d69363;--orange-soft:rgba(214,147,99,.16);--code-bg:rgba(0,0,0,.22);--mark-bg:rgba(214,168,95,.32);--ubg:#243a34;--abg:transparent;--ts:16px;--bs:14px;--fs:15px;--safe-t:env(safe-area-inset-top);--safe-b:env(safe-area-inset-bottom);--sw:260px;--r:4px;--mat-accent:#78bfa6}
@@ -751,14 +751,15 @@ html,body{overflow-x:hidden;max-width:100vw}
 </div></div></div>
 <!-- 素材编辑器 -->
 <div class="mat-app" id="matApp"></div>
-<div class="version">v3.1.59</div>
+<div class="version">v3.1.60</div>
 <div class="mo" id="modal"><div class="mo-box" id="moBox"><div class="mo-hdr"><h3 id="moTitle"></h3><button class="mo-cls" onclick="moClose()">×</button></div><div class="mo-body" id="moBody"></div><div class="mo-ftr" id="moFtr"></div></div></div>
 <div class="ctx" id="ctxMenu"></div>
 <div class="ctx" id="convMenu"></div>
 <div class="ctx" id="grpMenu"></div>
 <script>
 // ==================== 公共区 ====================
-const VER='3.1.59',RSN_F=['reasoning_content','reasoning','thinking','thought','inner_monologue'];
+const VER='3.1.60',RSN_F=['reasoning_content','reasoning','thinking','thought','inner_monologue'];
+let _updateChecked=false;
 let materials={chars:{},charOrder:[],rels:{},relIndex:[],apps:{},appOrder:[],appGroups:{},groupOrder:[],metaPrompts:{},metaOrder:[],appKeywords:{},_sourceFile:'',_importedAt:'',_savedAt:''};
 let storyData={timelineYears:[],stories:[]},tlPointsChat=[];
 let localMeta={},folderH=null,isMobile=false,kbOn=false;
@@ -1228,7 +1229,8 @@ function hf(f,...a){hideAllCtx();f(...a)}
 function ok(m){toast(m?'✓ '+m:'✓')}
 
 //== init ==//
-function init(){checkMobile();loadLocal();loadMatCache();loadTheme();applyUI();renderApiSel();updatePendB();setupScroll();setupMsgCtx();setupDblTap();setupResize();setupConvDrag();setupConvCtx();setupBeforeUnload();setupViewport();setupMobSend();document.getElementById('userIn').addEventListener('paste',handleInputPaste);initWorkspace();initMatEditor();migrateLocalMeta();updateCostDisplay();if(CTX_DBL_TAP){const _cm=document.getElementById('ctxMenu');_cm.addEventListener('click',function(e){if(!_ctxFromDblTap)return;const item=e.target.closest('.ctx-i');if(!item)return;if(_ctxTapEl===item&&Date.now()-_ctxTapTime<2000){_ctxTapEl=null;return}e.stopPropagation();e.preventDefault();_cm.querySelectorAll('.ctx-i.ctx-hl').forEach(el=>el.classList.remove('ctx-hl'));item.classList.add('ctx-hl');_ctxTapEl=item;_ctxTapTime=Date.now()},true)}if(uiSettings.enableKatex)loadKatex();initFolderIDB().then(()=>tryRestoreFolder());window.addEventListener('resize',checkMobile);document.addEventListener('keydown',globalKD);document.addEventListener('click',e=>{hideAllCtx();if(!e.target.closest('.star-dd')&&!e.target.closest('.star-btn'))hideStarDD();if(!e.target.closest('.qp-dd')&&!e.target.closest('#qpBtn'))hideQPDD();if(!e.target.closest('.csel'))hideAllCsel()});document.addEventListener('touchstart',e=>{if(!e.target.closest('.ctx'))hideAllCtx()},{passive:true})}
+function init(){checkMobile();loadLocal();loadMatCache();loadTheme();applyUI();renderApiSel();updatePendB();setupScroll();setupMsgCtx();setupDblTap();setupResize();setupConvDrag();setupConvCtx();setupBeforeUnload();setupViewport();setupMobSend();document.getElementById('userIn').addEventListener('paste',handleInputPaste);initWorkspace();initMatEditor();migrateLocalMeta();updateCostDisplay();if(CTX_DBL_TAP){const _cm=document.getElementById('ctxMenu');_cm.addEventListener('click',function(e){if(!_ctxFromDblTap)return;const item=e.target.closest('.ctx-i');if(!item)return;if(_ctxTapEl===item&&Date.now()-_ctxTapTime<2000){_ctxTapEl=null;return}e.stopPropagation();e.preventDefault();_cm.querySelectorAll('.ctx-i.ctx-hl').forEach(el=>el.classList.remove('ctx-hl'));item.classList.add('ctx-hl');_ctxTapEl=item;_ctxTapTime=Date.now()},true)}if(uiSettings.enableKatex)loadKatex();initFolderIDB().then(()=>tryRestoreFolder());window.addEventListener('resize',checkMobile);
+setTimeout(checkUpdate,3000);document.addEventListener('keydown',globalKD);document.addEventListener('click',e=>{hideAllCtx();if(!e.target.closest('.star-dd')&&!e.target.closest('.star-btn'))hideStarDD();if(!e.target.closest('.qp-dd')&&!e.target.closest('#qpBtn'))hideQPDD();if(!e.target.closest('.csel'))hideAllCsel()});document.addEventListener('touchstart',e=>{if(!e.target.closest('.ctx'))hideAllCtx()},{passive:true})}
 
 //== loadKatex ==//
 async function loadKatex(){
@@ -1237,7 +1239,27 @@ try{const link=document.createElement('link');link.rel='stylesheet';link.href='h
 return new Promise(resolve=>{const sc=document.createElement('script');sc.src='https://cdn.jsdelivr.net/npm/katex@0.16/dist/katex.min.js';sc.onload=()=>resolve(true);sc.onerror=()=>resolve(false);document.head.appendChild(sc)})}catch(e){return false}}
 
 //== checkMobile ==//
-function checkMobile(){isMobile=window.innerWidth<=768;if(!isMobile)kbOn=false;document.getElementById('mobBtns').style.display=isMobile?'block':'none';const h=document.querySelector('.dk-hint');if(h)h.style.display=isMobile?'none':'inline';updateToolbarTitle();const mb=document.getElementById('matModeBtn');if(mb){if(isMobile){mb.textContent='📁';mb.onclick=()=>selectFolder()}else{mb.textContent='素材';mb.onclick=()=>switchMode('mat')}}}
+function checkMobile(){isMobile=window.innerWidth<=768;if(!isMobile)kbOn=false;document.getElementById('mobBtns').style.display=isMobile?'block':'none';const h=document.querySelector('.dk-hint');if(h)h.style.display=isMobile?'none':'inline';updateToolbarTitle();const mb=document.getElementById('matModeBtn');if(mb){if(isMobile){mb.textContent='📁';mb.onclick=()=>smartFolderConnect()}else{mb.textContent='素材';mb.onclick=()=>switchMode('mat')}}}
+
+//== checkUpdate ==//
+async function checkUpdate(){
+if(_updateChecked)return;
+_updateChecked=true;
+try{
+const url=location.href.split('?')[0].split('#')[0];
+const resp=await fetch(url+'?_t='+Date.now(),{cache:'no-store'});
+if(!resp.ok)return;
+const text=await resp.text();
+const m=text.match(/const VER='([^']+)'/);
+if(!m)return;
+const remote=m[1];
+if(remote!==VER){
+const el=document.createElement('div');
+el.style.cssText='position:fixed;top:0;left:0;right:0;z-index:9999;background:var(--wn);color:#000;padding:10px 16px;font-size:13px;display:flex;align-items:center;gap:8px;padding-top:calc(10px + var(--safe-t))';
+el.innerHTML=`<span style="flex:1">🔄 新版本 v${remote} 可用（当前 v${VER}）</span><button onclick="location.reload(true)" style="padding:6px 12px;background:#fff;border:none;border-radius:4px;font-size:13px;cursor:pointer;font-weight:600">刷新</button><button onclick="this.parentElement.remove()" style="padding:6px 8px;background:transparent;border:none;color:#000;cursor:pointer;font-size:16px">×</button>`;
+document.body.prepend(el)
+}
+}catch(e){}}
 
 //== updateToolbarTitle ==//
 function updateToolbarTitle(){const el=document.getElementById('toolbarTitle');if(isMobile){el.textContent=curConv?.name||'💬 新对话'}else{el.textContent='💬 创作对话'}}
@@ -1291,7 +1313,7 @@ const mb=document.getElementById('fldBtnM');
 if(mb){
 mb.textContent=name?'📁'+name:'📁 文件夹';
 mb.classList.toggle('fld-ok',!!name);
-mb.onclick=()=>selectFolder()
+mb.onclick=()=>smartFolderConnect()
 }}
 
 //== getFolderLockKey ==//
@@ -1817,6 +1839,47 @@ async function rebuildIndex(){if(!folderH){toast('请先选择文件夹');return
 
 //== selectFolder ==//
 async function selectFolder(){try{folderH=await window.showDirectoryPicker({mode:'readwrite'});saveFolderHandleIDB(folderH);_dirHandleCache={};startWorkspaceLock();const hasCfg=await loadCfgFile();if(!hasCfg){groups=[{id:'_default',name:'默认',order:0,color:null,collapsed:false}]}await loadFolder();if(!hasCfg)await saveCfg();updateFolderUI();startWorkspaceLock();applyUI();renderApiSel();toast(writeLocked?'⚠️ 已连接但处于只读模式':'✓ 已连接');if(isMobile)closeSB()}catch(e){if(e.name!=='AbortError')toast('❌ 选择文件夹失败: '+e.name+': '+(e.message||'').substring(0,60))}}
+
+//== smartFolderConnect ==//
+async function smartFolderConnect(){
+if(folderH){
+toast('已连接: '+folderH.name);
+return
+}
+const h=await loadFolderHandleIDB();
+if(h){
+try{
+let perm=await h.queryPermission({mode:'readwrite'});
+if(perm==='granted'){
+folderH=h;_dirHandleCache={};
+startWorkspaceLock();
+const hasCfg=await loadCfgFile();
+if(!hasCfg)groups=[{id:'_default',name:'默认',order:0,color:null,collapsed:false}];
+await loadFolder();
+if(!hasCfg)await saveCfg();
+updateFolderUI();startWorkspaceLock();applyUI();renderApiSel();
+toast(writeLocked?'⚠️ 已恢复但处于只读模式':'✓ 已恢复');
+return
+}
+perm=await h.requestPermission({mode:'readwrite'});
+if(perm==='granted'){
+folderH=h;_dirHandleCache={};
+startWorkspaceLock();
+const hasCfg=await loadCfgFile();
+if(!hasCfg)groups=[{id:'_default',name:'默认',order:0,color:null,collapsed:false}];
+await loadFolder();
+if(!hasCfg)await saveCfg();
+updateFolderUI();startWorkspaceLock();applyUI();renderApiSel();
+toast(writeLocked?'⚠️ 已恢复但处于只读模式':'✓ 已恢复');
+return
+}
+toast('⚠️ 授权被拒绝，请重新选择文件夹');
+}catch(e){
+toast('⚠️ 恢复失败，请重新选择');
+}
+}
+await selectFolder()
+}
 
 //== loadFolder ==//
 async function loadFolder(){if(!folderH)return;_dirHandleCache={};
