@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
-<title>创作对话工具 v3.1.63</title>
+<title>创作对话工具 v3.1.66</title>
 <style>
 
 :root{--bg-p:#151513;--bg-s:#1d1d1a;--bg-t:#282824;--tx-p:#e8e3d8;--tx-s:#b6afa2;--tx-m:#777065;--bd:#37362f;--ac:#78bfa6;--ach:#66ad95;--ac-soft:rgba(120,191,166,.14);--ok:#79c58e;--ok-soft:rgba(121,197,142,.16);--wn:#d6a85f;--wn-soft:rgba(214,168,95,.16);--dn:#d9827b;--dn-soft:rgba(217,130,123,.16);--purple:#b68ac8;--purple-soft:rgba(182,138,200,.14);--pink:#d887a8;--pink-soft:rgba(216,135,168,.16);--gold:#d6a85f;--gold-soft:rgba(214,168,95,.16);--indigo:#8d9cc8;--indigo-soft:rgba(141,156,200,.14);--orange:#d69363;--orange-soft:rgba(214,147,99,.16);--code-bg:rgba(0,0,0,.22);--mark-bg:rgba(214,168,95,.32);--ubg:#243a34;--abg:transparent;--ts:16px;--bs:14px;--fs:15px;--safe-t:env(safe-area-inset-top);--safe-b:env(safe-area-inset-bottom);--sw:260px;--r:4px;--mat-accent:#78bfa6}
@@ -763,14 +763,14 @@ html,body{overflow-x:hidden;max-width:100vw}
 </div></div></div>
 <!-- 素材编辑器 -->
 <div class="mat-app" id="matApp"></div>
-<div class="version">v3.1.63</div>
+<div class="version">v3.1.66</div>
 <div class="mo" id="modal"><div class="mo-box" id="moBox"><div class="mo-hdr"><h3 id="moTitle"></h3><button class="mo-cls" onclick="moClose()">×</button></div><div class="mo-body" id="moBody"></div><div class="mo-ftr" id="moFtr"></div></div></div>
 <div class="ctx" id="ctxMenu"></div>
 <div class="ctx" id="convMenu"></div>
 <div class="ctx" id="grpMenu"></div>
 <script>
 // ==================== 公共区 ====================
-const VER='3.1.63',RSN_F=['reasoning_content','reasoning','thinking','thought','inner_monologue'];
+const VER='3.1.66',RSN_F=['reasoning_content','reasoning','thinking','thought','inner_monologue'];
 let _updateChecked=false;
 let materials={chars:{},charOrder:[],rels:{},relIndex:[],apps:{},appOrder:[],appGroups:{},groupOrder:[],metaPrompts:{},metaOrder:[],appKeywords:{},_sourceFile:'',_importedAt:'',_savedAt:''};
 let storyData={timelineYears:[],stories:[]},tlPointsChat=[];
@@ -1547,6 +1547,7 @@ if(sp)msgs.push({id:gid2(),role:'system',contentParts:[{type:'text',text:sp}]});
 const cp=[];
 if(msg.reasoning)cp.push({type:'reasoning',text:msg.reasoning,duration:msg.reasoningDuration||0});
 cp.push({type:'text',text:msg.content||''});
+if(msg.images?.length)cp.push({type:'images',images:msg.images});
 msgs.push({id:msg.id,role:msg.role,contentParts:cp,timestamp:msg.timestamp?new Date(msg.timestamp).getTime():Date.now(),model:msg.model||'',generating:false})
 });
 d[`session:${conv.id}`]={id:conv.id,name:conv.name,type:'chat',starred:conv.pinned||false,messages:msgs,messageForksHash:{},_chatTool:{materialConfig:conv.materialConfig,tempAppendices:conv.tempAppendices||[],groupId:conv.groupId||'_default',convParams:conv.convParams||{},foldGroups:conv.foldGroups||[],foldedMsgIds:conv.foldedMsgIds||[],lockedModel:conv.lockedModel||null}}
@@ -2508,7 +2509,7 @@ function tglRsn(id){const c=document.getElementById('rc-'+id),a=document.getElem
 function copyRsn(id){const el=document.getElementById('rc-'+id);if(el)copyText(el.textContent).then(()=>toast('✓ 已复制'))}
 
 //== copyMsg ==//
-function copyMsg(i){if(!curConv?.messages?.[i])return;copyText(curConv.messages[i].content||'').then(()=>toast('✓ 已复制'))}
+function copyMsg(i){if(!curConv?.messages?.[i])return;const msg=curConv.messages[i];if(msg.images?.length){const imgNote=msg.images.map((im,j)=>`[图片${j+1}: ${im.name||'image'} ${im.width}×${im.height}]`).join('\n');copyText((msg.content||'')+'\n'+imgNote).then(()=>toast('✓ 已复制(含图片信息)'))}else{copyText(msg.content||'').then(()=>toast('✓ 已复制'))}}
 
 //== setEdRole ==//
 function setEdRole(r){document.getElementById('edRole').value=r;['user','assistant','system'].forEach(v=>{const b=document.getElementById('edR_'+v);if(b){b.style.background=v===r?'var(--ac)':'';b.style.color=v===r?'#fff':'';b.style.borderColor=v===r?'var(--ac)':''}})}
@@ -2776,7 +2777,7 @@ const vis=[];curConv.messages.forEach((m,i)=>{if(!roles.includes(m.role))return;
 const msgMatches={};if(mgrMode==='replace'&&frMatches.length)frMatches.forEach((m,fi)=>{if(!msgMatches[m.msgIdx])msgMatches[m.msgIdx]=[];msgMatches[m.msgIdx].push({...m,_fi:fi})});
 const replVisSet=new Set();if(mgrMode==='replace'&&frMatches.length)frMatches.forEach(m=>replVisSet.add(m.msgIdx));
 let h='';vis.forEach(i=>{const m=curConv.messages[i];const cc=(m.content||'').length;const cls=['mute-row'];const isChecked=mgrSel.has(i);if(isChecked&&mgrMode==='manage')cls.push('is-checked');if(m.muted)cls.push('is-muted');
-if(mgrMode==='manage'){const preview=kw?hlKw(exSnip(m.content,kw,80),kw):esc(msgPreview(m.content))||(roleIcon(m.role)+' (空)');
+if(mgrMode==='manage'){const hasImg2=m.images?.length;const preview=(hasImg2?'📷 ':'')+(kw?hlKw(exSnip(m.content,kw,80),kw):esc(msgPreview(m.content))||(roleIcon(m.role)+' (空)'));
 h+=`<div class="${cls.join(' ')}" onclick="onMgrRowClick(${i})" id="mrow-${i}"><input type="checkbox" ${isChecked?'checked':''} onclick="sp();onMgrRowCheck(${i})" style="width:15px;height:15px;flex-shrink:0;accent-color:var(--ac)"><span class="mr-idx">#${i+1}</span><span class="mr-role">${roleIcon(m.role)}</span><span class="mr-ct${kw?' mr-ct-multi':''}">${preview}</span><span class="mr-chars">${cc>99?Math.round(cc/1000)+'k':cc}</span>${m.muted?'<span class="mr-muted">🔇</span>':''}</div>`}else{if(!frMatches.length||replVisSet.has(i)){const preview=esc(msgPreview(m.content));const hasMM=msgMatches[i]&&msgMatches[i].length;
 h+=`<div class="mute-row${m.muted?' is-muted':''}" id="mrow-${i}"><span class="mr-idx">#${i+1}</span><span class="mr-role">${roleIcon(m.role)}</span><span class="mr-ct">${preview}</span><span class="mr-chars">${cc>99?Math.round(cc/1000)+'k':cc}</span>${m.muted?'<span class="mr-muted">🔇</span>':''}</div>`;if(hasMM)msgMatches[i].forEach(mm=>{const fiChecked=frSel.has(mm._fi);h+=`<div style="display:flex;align-items:flex-start;gap:6px;padding:2px 8px 2px 32px;font-size:11px;line-height:1.3;margin-bottom:1px;cursor:pointer;border-left:2px solid ${fiChecked?'var(--ac)':'var(--bd)'}" onclick="if(frSel.has(${mm._fi}))frSel.delete(${mm._fi});else frSel.add(${mm._fi});renderMgrList()"><input type="checkbox" ${fiChecked?'checked':''} onclick="sp();if(frSel.has(${mm._fi}))frSel.delete(${mm._fi});else frSel.add(${mm._fi});renderMgrList()" style="width:13px;height:13px;flex-shrink:0;accent-color:var(--wn);margin-top:1px"><span style="color:var(--tx-s);flex:1">${hlKw(mm.snippet,kw)}</span><button class="bbn" onclick="sp();mgrJumpToMatch(null,${i},${mm.charIdx},'${escA(kw)}')" style="padding:1px 5px;font-size:10px;flex-shrink:0" title="跳转">→</button></div>`})}}});
 if(!h&&mgrMode==='replace'&&!frMatches.length)h='<div style="text-align:center;color:var(--tx-m);padding:16px">请输入关键词并点击🔍搜索</div>';
@@ -3101,6 +3102,20 @@ if(bytes<1024)return bytes+'B';
 if(bytes<1024*1024)return(bytes/1024).toFixed(1)+'KB';
 return(bytes/1024/1024).toFixed(2)+'MB'}
 
+//== buildImageContent ==//
+function buildImageContent(msg){
+if(!msg.images?.length)return msg.content||'';
+const detail=(uiSettings.imageDetail)||'auto';
+const parts=[];
+if(msg.content&&msg.content.trim()&&msg.content!=='[图片]'&&!msg.content.startsWith('[图片: '))parts.push({type:'text',text:msg.content});
+msg.images.forEach(img=>{
+const url=img.dataUrl||('data:'+(img.mimeType||'image/png')+';base64,'+img.base64);
+parts.push({type:'image_url',image_url:{url,detail}})
+});
+if(!parts.some(p=>p.type==='text'))parts.unshift({type:'text',text:'(图片)'});
+return parts
+}
+
 //== addAttachment ==//
 function addAttachment(content,name){
 if(!name){const pv=content.trimStart().split('\n')[0].substring(0,20).trim();name=pv||'粘贴内容'}
@@ -3369,15 +3384,14 @@ const sep='\n\n---\n\n';
 if(!m)return;
 const role=m.role||'user';
 const content=m.content||'';
-const hasImg=m._hasImages;
+const hasImg=Array.isArray(content);
 const last=out[out.length-1];
-if(!hasImg&&(role==='user'||role==='assistant')&&last&&last.role===role&&!last._hasImages){
+if(!hasImg&&(role==='user'||role==='assistant')&&last&&last.role===role&&!Array.isArray(last.content)){
 if(typeof last.content==='string')last.content=last.content+sep+content;
 else last.content=content;
 }else{
-out.push({role,content,_hasImages:hasImg})
+out.push({role,content})
 }});
-out.forEach(m=>delete m._hasImages);
 return out
 }
 
@@ -3874,7 +3888,7 @@ function pvApp(n){const kws=materials.appKeywords[n]||[];_pvClipText=materials.a
 function showExport(){const ac='background:var(--ac);color:#fff;border-color:var(--ac)';showMo('📤 导出',`<div style="padding:8px 10px;background:var(--bg-t);border:1px solid var(--bd);border-radius:var(--r);margin-bottom:10px"><div style="font-weight:600;margin-bottom:4px">🚚 一键搬家包</div><div style="font-size:12px;color:var(--tx-m);line-height:1.5;margin-bottom:8px">自动导出全部对话、设置、素材、剧情、费用日志。优先写入你设置的搬家文件夹；不行会提示后改为普通下载。</div><button class="mo-btn pri" onclick="hideMo();exportMovePack()">🚚 导出搬家包</button></div><div class="fg"><label>范围</label><div id="expSGrp" style="display:flex;gap:4px;flex-wrap:wrap"><button class="bbn" data-v="current" onclick="pickOpt('expSGrp','expS','current')" style="${ac}">当前对话</button><button class="bbn" data-v="group" onclick="pickOpt('expSGrp','expS','group')">当前分组</button><button class="bbn" data-v="all" onclick="pickOpt('expSGrp','expS','all')">全部对话</button></div><input type="hidden" id="expS" value="current"></div><div class="fg"><label>格式</label><div id="expFmtGrp" style="display:flex;gap:4px;flex-wrap:wrap"><button class="bbn" data-v="json" onclick="pickOpt('expFmtGrp','expFmt','json')" style="${ac}">JSON</button><button class="bbn" data-v="txt" onclick="pickOpt('expFmtGrp','expFmt','txt')">纯文本</button><button class="bbn" data-v="ai" onclick="pickOpt('expFmtGrp','expFmt','ai')">纯AI</button></div><input type="hidden" id="expFmt" value="json"></div><div class="fg"><label><input type="checkbox" id="expA" style="width:14px;height:14px;margin-right:6px" checked>包含设置</label></div><div class="fg"><label><input type="checkbox" id="expMat" style="width:14px;height:14px;margin-right:6px" checked>包含素材</label></div><div class="fg"><label><input type="checkbox" id="expStory" style="width:14px;height:14px;margin-right:6px" checked>包含剧情</label></div><div class="fg"><label><input type="checkbox" id="expCost" style="width:14px;height:14px;margin-right:6px">包含费用日志(完整搬家)</label></div>`,`<button class="mo-btn sec" onclick="hideMo()">取消</button><button class="mo-btn sec" onclick="hideMo();exportMovePack()">🚚 搬家包</button><button class="mo-btn pri" onclick="doExport()">📤 导出</button>`)}
 
 //== doExport ==//
-async function doExport(){const sc=document.getElementById('expS').value,fmt=document.getElementById('expFmt').value,incCfg=document.getElementById('expA').checked,incMat=document.getElementById('expMat').checked,incStory=document.getElementById('expStory').checked,incCost=document.getElementById('expCost')?.checked||false;let targets=[];if(sc==='current'){if(curConv)targets=[curConv]}else if(sc==='group'){const gid=curConv?.groupId||'_default';for(const m of convList.filter(c=>(c.groupId||'_default')===gid)){const c=await loadConvFull(m.id);if(c)targets.push(c)}}else{for(const m of convList){const c=await loadConvFull(m.id);if(c)targets.push(c)}}if(!targets.length){toast('无数据');return}let fileName;if(targets.length===1){fileName=targets[0].name.replace(/[\/\\:*?"<>|]/g,'_').substring(0,50)+'_'+fmtD(new Date())}else fileName='对话_'+fmtD(new Date());if(fmt==='txt'||fmt==='ai'){let txt='';targets.forEach(conv=>{if(targets.length>1)txt+=`\n${'='.repeat(40)}\n📁 ${conv.name}\n${'='.repeat(40)}\n\n`;conv.messages?.forEach((m,i)=>{if(fmt==='ai'&&m.role!=='assistant')return;if(fmt==='txt')txt+=`[#${i+1} ${m.role==='user'?'用户':m.role==='system'?'系统':'AI'}]\n${m.content||''}\n\n`;else txt+=(m.content||'')+'\n\n---\n\n'})});dl(fileName+'.txt',txt.trim(),'text/plain');hideMo();ok();return}const d={'__exported_items':['conversations'],'__exported_at':new Date().toISOString(),configVersion:13,'chat-sessions-list':[]};if(incCfg){const ct={version:VER,apiConfigs,starredModels,groups,params,uiSettings,shortcuts,curApiId,curModel,quickPhrases,localMeta,priceTable,costSettings};if(incMat){ct.materials=materials;if(folderH){try{const vd=await folderH.getDirectoryHandle('mat_versions');const pf=await vd.getFileHandle('_projects.json');ct.matProjects=JSON.parse(await(await pf.getFile()).text());ct.matVersionFiles={};for await(const en of vd.values()){if(en.kind==='file'&&en.name.endsWith('.txt')){ct.matVersionFiles[en.name]=await(await en.getFile()).text()}}}catch(e){}}}if(incStory&&storyData.stories?.length)ct.storyData=storyData;d._chatTool=ct}if(incCost)d._chatToolCostLogs={version:1,savedAt:new Date().toISOString(),items:costLogs};targets.forEach(conv=>{d['chat-sessions-list'].push({id:conv.id,name:conv.name,starred:conv.pinned||false,type:'chat'});const sp=genMatFull(conv.materialConfig);const msgs=[];if(sp)msgs.push({id:gid2(),role:'system',contentParts:[{type:'text',text:sp}]});(conv.messages||[]).forEach(msg=>{const cp=[];if(msg.reasoning)cp.push({type:'reasoning',text:msg.reasoning,duration:msg.reasoningDuration||0});cp.push({type:'text',text:msg.content||''});msgs.push({id:msg.id,role:msg.role,contentParts:cp,timestamp:msg.timestamp?new Date(msg.timestamp).getTime():Date.now(),model:msg.model||'',generating:false})});d[`session:${conv.id}`]={id:conv.id,name:conv.name,type:'chat',starred:conv.pinned||false,messages:msgs,messageForksHash:{},_chatTool:{materialConfig:conv.materialConfig,tempAppendices:conv.tempAppendices||[],groupId:conv.groupId||'_default',convParams:conv.convParams||{},foldGroups:conv.foldGroups||[],foldedMsgIds:conv.foldedMsgIds||[],lockedModel:conv.lockedModel||null}}});dl(fileName+'.json',JSON.stringify(d,null,2),'application/json');hideMo();ok()}
+async function doExport(){const sc=document.getElementById('expS').value,fmt=document.getElementById('expFmt').value,incCfg=document.getElementById('expA').checked,incMat=document.getElementById('expMat').checked,incStory=document.getElementById('expStory').checked,incCost=document.getElementById('expCost')?.checked||false;let targets=[];if(sc==='current'){if(curConv)targets=[curConv]}else if(sc==='group'){const gid=curConv?.groupId||'_default';for(const m of convList.filter(c=>(c.groupId||'_default')===gid)){const c=await loadConvFull(m.id);if(c)targets.push(c)}}else{for(const m of convList){const c=await loadConvFull(m.id);if(c)targets.push(c)}}if(!targets.length){toast('无数据');return}let fileName;if(targets.length===1){fileName=targets[0].name.replace(/[\/\\:*?"<>|]/g,'_').substring(0,50)+'_'+fmtD(new Date())}else fileName='对话_'+fmtD(new Date());if(fmt==='txt'||fmt==='ai'){let txt='';targets.forEach(conv=>{if(targets.length>1)txt+=`\n${'='.repeat(40)}\n📁 ${conv.name}\n${'='.repeat(40)}\n\n`;conv.messages?.forEach((m,i)=>{if(fmt==='ai'&&m.role!=='assistant')return;if(fmt==='txt')txt+=`[#${i+1} ${m.role==='user'?'用户':m.role==='system'?'系统':'AI'}]\n${m.content||''}\n\n`;else txt+=(m.content||'')+'\n\n---\n\n'})});dl(fileName+'.txt',txt.trim(),'text/plain');hideMo();ok();return}const d={'__exported_items':['conversations'],'__exported_at':new Date().toISOString(),configVersion:13,'chat-sessions-list':[]};if(incCfg){const ct={version:VER,apiConfigs,starredModels,groups,params,uiSettings,shortcuts,curApiId,curModel,quickPhrases,localMeta,priceTable,costSettings};if(incMat){ct.materials=materials;if(folderH){try{const vd=await folderH.getDirectoryHandle('mat_versions');const pf=await vd.getFileHandle('_projects.json');ct.matProjects=JSON.parse(await(await pf.getFile()).text());ct.matVersionFiles={};for await(const en of vd.values()){if(en.kind==='file'&&en.name.endsWith('.txt')){ct.matVersionFiles[en.name]=await(await en.getFile()).text()}}}catch(e){}}}if(incStory&&storyData.stories?.length)ct.storyData=storyData;d._chatTool=ct}if(incCost)d._chatToolCostLogs={version:1,savedAt:new Date().toISOString(),items:costLogs};targets.forEach(conv=>{d['chat-sessions-list'].push({id:conv.id,name:conv.name,starred:conv.pinned||false,type:'chat'});const sp=genMatFull(conv.materialConfig);const msgs=[];if(sp)msgs.push({id:gid2(),role:'system',contentParts:[{type:'text',text:sp}]});(conv.messages||[]).forEach(msg=>{const cp=[];if(msg.reasoning)cp.push({type:'reasoning',text:msg.reasoning,duration:msg.reasoningDuration||0});cp.push({type:'text',text:msg.content||''});if(msg.images?.length)cp.push({type:'images',images:msg.images});msgs.push({id:msg.id,role:msg.role,contentParts:cp,timestamp:msg.timestamp?new Date(msg.timestamp).getTime():Date.now(),model:msg.model||'',generating:false})});d[`session:${conv.id}`]={id:conv.id,name:conv.name,type:'chat',starred:conv.pinned||false,messages:msgs,messageForksHash:{},_chatTool:{materialConfig:conv.materialConfig,tempAppendices:conv.tempAppendices||[],groupId:conv.groupId||'_default',convParams:conv.convParams||{},foldGroups:conv.foldGroups||[],foldedMsgIds:conv.foldedMsgIds||[],lockedModel:conv.lockedModel||null}}});dl(fileName+'.json',JSON.stringify(d,null,2),'application/json');hideMo();ok()}
 
 //== showImport ==//
 function showImport(){if(isWriteBlocked('导入对话'))return;if(importLock){toast('导入进行中');return}const inp=document.createElement('input');inp.type='file';inp.accept='.json,.txt';inp.onchange=async e=>{const f=e.target.files[0];if(!f)return;if(!folderH){toast('请先选择文件夹');return}showMo('📥 读取文件',`<div style="text-align:center;padding:20px"><div>正在读取 ${esc(f.name)}...</div><div class="prog-bar"><div class="prog-fill" style="width:30%"></div></div></div>`,'');await new Promise(r=>setTimeout(r,30));try{const data=JSON.parse(await f.text());await analyzeImport(data)}catch(err){toast('解析失败: '+err.message)}};inp.click()}
@@ -3885,7 +3899,10 @@ function parseChatboxApi(data){const apis=[];const providers=data.settings?.prov
 //== analyzeImport ==//
 async function analyzeImport(data){const isCB=data['chat-sessions-list']||data['__exported_items'];if(!isCB){toast('未识别的格式');return}const gCT=data._chatTool||null;const cbApis=gCT?[]:parseChatboxApi(data);const allImportApis=gCT?.apiConfigs||cbApis;
 showMo('📥 分析',`<div style="text-align:center;padding:20px"><div id="anText">分析中...</div><div class="prog-bar"><div class="prog-fill" id="anProg" style="width:0%"></div></div></div>`,'');await new Promise(r=>setTimeout(r,50));
-const sessionsList=data['chat-sessions-list']||[];const importConvs=[];for(let si=0;si<sessionsList.length;si++){const sess=sessionsList[si];const sd=data[`session:${sess.id}`];if(!sd)continue;const msgs=[];(sd.messages||[]).forEach((msg,idx)=>{if(idx===0&&msg.role==='system')return;let ct='',rsn='',rd=0;(msg.contentParts||[]).forEach(p=>{if(p.type==='text')ct+=p.text||'';else if(p.type==='reasoning'){rsn=p.text||'';rd=p.duration||0}});const nm={id:msg.id||gid2(),role:msg.role,content:ct,timestamp:msg.timestamp?new Date(msg.timestamp).toISOString():new Date().toISOString(),model:msg.model||''};if(rsn){nm.reasoning=rsn;nm.reasoningDuration=rd}msgs.push(nm)});const ct2=sd._chatTool||{};importConvs.push({name:sess.name||'?',pinned:sess.starred||false,messages:msgs,materialConfig:ct2.materialConfig||null,tempAppendices:ct2.tempAppendices||[],groupId:ct2.groupId||null,convParams:ct2.convParams||{},foldGroups:ct2.foldGroups||[],foldedMsgIds:ct2.foldedMsgIds||[],lockedModel:ct2.lockedModel||null})}
+const sessionsList=data['chat-sessions-list']||[];const importConvs=[];for(let si=0;si<sessionsList.length;si++){const sess=sessionsList[si];const sd=data[`session:${sess.id}`];if(!sd)continue;const msgs=[];(sd.messages||[]).forEach((msg,idx)=>{if(idx===0&&msg.role==='system')return;let ct='',rsn='',rd=0;(msg.contentParts||[]).forEach(p=>{if(p.type==='text')ct+=p.text||'';else if(p.type==='reasoning'){rsn=p.text||'';rd=p.duration||0}});const nm={id:msg.id||gid2(),role:msg.role,content:ct,timestamp:msg.timestamp?new Date(msg.timestamp).toISOString():new Date().toISOString(),model:msg.model||''};if(rsn){nm.reasoning=rsn;nm.reasoningDuration=rd}
+const imgPart=(msg.contentParts||[]).find(p=>p.type==='images');
+if(imgPart?.images)nm.images=imgPart.images;
+msgs.push(nm)});const ct2=sd._chatTool||{};importConvs.push({name:sess.name||'?',pinned:sess.starred||false,messages:msgs,materialConfig:ct2.materialConfig||null,tempAppendices:ct2.tempAppendices||[],groupId:ct2.groupId||null,convParams:ct2.convParams||{},foldGroups:ct2.foldGroups||[],foldedMsgIds:ct2.foldedMsgIds||[],lockedModel:ct2.lockedModel||null})}
 const cats={new:[],identical:[],superset:[],subset:[],diverged:[],different:[]};
 for(let ci=0;ci<importConvs.length;ci++){const ic=importConvs[ci];const candidates=convList.filter(ec=>ec.name===ic.name);if(!candidates.length){cats.new.push(ic);continue}const closeMatch=candidates.filter(ec=>Math.abs(ec.msgCount-ic.messages.length)<=Math.max(ec.msgCount,ic.messages.length)*0.5);if(!closeMatch.length){ic._mt='different';cats.different.push(ic);continue}const existing=[];for(const ec of closeMatch){const full=ec.id===curConvId&&curConv?curConv:await loadConvFull(ec.id);if(full)existing.push(full)}let best=null,bestType='different';for(const ex of existing){const type=cmpConvs(ex,ic);if(type==='identical'){best=ex;bestType='identical';break}if(type==='superset'&&bestType!=='identical'){best=ex;bestType='superset'}if(type==='subset'&&!['identical','superset'].includes(bestType)){best=ex;bestType='subset'}if(type==='diverged'&&!['identical','superset','subset'].includes(bestType)){best=ex;bestType='diverged'}}ic._mt=bestType;ic._mc=best;cats[bestType].push(ic);if(ci%10===0)await new Promise(r=>setTimeout(r,0))}
 const apiCats={new:[],existing:[],updatable:[]};
