@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
-<title>创作对话工具 v3.1.62</title>
+<title>创作对话工具 v3.1.63</title>
 <style>
 
 :root{--bg-p:#151513;--bg-s:#1d1d1a;--bg-t:#282824;--tx-p:#e8e3d8;--tx-s:#b6afa2;--tx-m:#777065;--bd:#37362f;--ac:#78bfa6;--ach:#66ad95;--ac-soft:rgba(120,191,166,.14);--ok:#79c58e;--ok-soft:rgba(121,197,142,.16);--wn:#d6a85f;--wn-soft:rgba(214,168,95,.16);--dn:#d9827b;--dn-soft:rgba(217,130,123,.16);--purple:#b68ac8;--purple-soft:rgba(182,138,200,.14);--pink:#d887a8;--pink-soft:rgba(216,135,168,.16);--gold:#d6a85f;--gold-soft:rgba(214,168,95,.16);--indigo:#8d9cc8;--indigo-soft:rgba(141,156,200,.14);--orange:#d69363;--orange-soft:rgba(214,147,99,.16);--code-bg:rgba(0,0,0,.22);--mark-bg:rgba(214,168,95,.32);--ubg:#243a34;--abg:transparent;--ts:16px;--bs:14px;--fs:15px;--safe-t:env(safe-area-inset-top);--safe-b:env(safe-area-inset-bottom);--sw:260px;--r:4px;--mat-accent:#78bfa6}
@@ -763,14 +763,14 @@ html,body{overflow-x:hidden;max-width:100vw}
 </div></div></div>
 <!-- 素材编辑器 -->
 <div class="mat-app" id="matApp"></div>
-<div class="version">v3.1.62</div>
+<div class="version">v3.1.63</div>
 <div class="mo" id="modal"><div class="mo-box" id="moBox"><div class="mo-hdr"><h3 id="moTitle"></h3><button class="mo-cls" onclick="moClose()">×</button></div><div class="mo-body" id="moBody"></div><div class="mo-ftr" id="moFtr"></div></div></div>
 <div class="ctx" id="ctxMenu"></div>
 <div class="ctx" id="convMenu"></div>
 <div class="ctx" id="grpMenu"></div>
 <script>
 // ==================== 公共区 ====================
-const VER='3.1.62',RSN_F=['reasoning_content','reasoning','thinking','thought','inner_monologue'];
+const VER='3.1.63',RSN_F=['reasoning_content','reasoning','thinking','thought','inner_monologue'];
 let _updateChecked=false;
 let materials={chars:{},charOrder:[],rels:{},relIndex:[],apps:{},appOrder:[],appGroups:{},groupOrder:[],metaPrompts:{},metaOrder:[],appKeywords:{},_sourceFile:'',_importedAt:'',_savedAt:''};
 let storyData={timelineYears:[],stories:[]},tlPointsChat=[];
@@ -1768,7 +1768,7 @@ function setupDblTap(){if(!isMobile)return;const c=document.getElementById('msgs
 //== showMsgCtx ==//
 function showMsgCtx(x,y){const msg=curConv?.messages?.[ctxMsgIdx];if(!msg)return;const isM=msg.muted;const cc=msg.content?.length||0;const thr=uiSettings.foldThreshold||500;const hasFold=cc>thr;const el=document.getElementById('msg-'+ctxMsgIdx);const isFolded=el?.querySelector('.fold-full')?.style.display==='none';const hasImg=msg.images?.length;
 const msgInfo=`${msg.model?esc(msg.model)+' | ':''}${fmtTime(msg.timestamp)} | ${cc.toLocaleString()}字${hasImg?' | 📷'+hasImg+'张':''}`;
-▓▓showCtxAt(x,y,'ctxMenu',`<div class="ctx-info">${msgInfo}</div><div class="ctx-i pri" onclick="hf(sendUpTo,${ctxMsgIdx})">⬇️ 从此发送</div><div class="ctx-i" onclick="hf(insertAfter,${ctxMsgIdx})">➕ 在此后插入</div><div class="ctx-i" onclick="hf(editMsg,${ctxMsgIdx})">✏️ 编辑</div><div class="ctx-i" onclick="hf(copyMsg,${ctxMsgIdx})">📋 复制内容</div><div class="ctx-i" onclick="hideAllCtx();mgrCache.replOpen=true;mgrMode='replace';showMsgMgr()">🔄 查找替换</div><div class="ctx-i" onclick="hf(msgToApp,${ctxMsgIdx})">📄 存为附录</div><div class="ctx-i wn" onclick="hf(toggleMute,${ctxMsgIdx})">${isM?'🔊 取消屏蔽':'🔇 屏蔽消息'}</div>${hasFold?`<div class="ctx-i" onclick="hf(toggleMsgFold,${ctxMsgIdx})">${isFolded?'📖 展开全文':'📄 折叠'}</div>`:''}<div class="ctx-d"></div><div class="ctx-i dn" onclick="hf(delMsg,${ctxMsgIdx})">🗑️ 删除</div><div class="ctx-i dn" onclick="hf(delAfter,${ctxMsgIdx})">🗑️ 删除后续</div>`)}
+showCtxAt(x,y,'ctxMenu',`<div class="ctx-info">${msgInfo}</div><div class="ctx-i pri" onclick="hf(sendUpTo,${ctxMsgIdx})">⬇️ 从此发送</div><div class="ctx-i" onclick="hf(insertAfter,${ctxMsgIdx})">➕ 在此后插入</div><div class="ctx-i" onclick="hf(editMsg,${ctxMsgIdx})">✏️ 编辑</div><div class="ctx-i" onclick="hf(copyMsg,${ctxMsgIdx})">📋 复制内容</div><div class="ctx-i" onclick="hideAllCtx();mgrCache.replOpen=true;mgrMode='replace';showMsgMgr()">🔄 查找替换</div><div class="ctx-i" onclick="hf(msgToApp,${ctxMsgIdx})">📄 存为附录</div><div class="ctx-i wn" onclick="hf(toggleMute,${ctxMsgIdx})">${isM?'🔊 取消屏蔽':'🔇 屏蔽消息'}</div>${hasFold?`<div class="ctx-i" onclick="hf(toggleMsgFold,${ctxMsgIdx})">${isFolded?'📖 展开全文':'📄 折叠'}</div>`:''}<div class="ctx-d"></div><div class="ctx-i dn" onclick="hf(delMsg,${ctxMsgIdx})">🗑️ 删除</div><div class="ctx-i dn" onclick="hf(delAfter,${ctxMsgIdx})">🗑️ 删除后续</div>`)}
 
 //== msgToApp ==//
 function msgToApp(idx){
