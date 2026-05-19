@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
-<title>创作对话工具 v3.1.80</title>
+<title>创作对话工具 v3.1.81</title>
 <style>
 
 :root{--bg-p:#151513;--bg-s:#1d1d1a;--bg-t:#282824;--tx-p:#e8e3d8;--tx-s:#b6afa2;--tx-m:#777065;--bd:#37362f;--ac:#78bfa6;--ach:#66ad95;--ac-soft:rgba(120,191,166,.14);--ok:#79c58e;--ok-soft:rgba(121,197,142,.16);--wn:#d6a85f;--wn-soft:rgba(214,168,95,.16);--dn:#d9827b;--dn-soft:rgba(217,130,123,.16);--purple:#b68ac8;--purple-soft:rgba(182,138,200,.14);--pink:#d887a8;--pink-soft:rgba(216,135,168,.16);--gold:#d6a85f;--gold-soft:rgba(214,168,95,.16);--indigo:#8d9cc8;--indigo-soft:rgba(141,156,200,.14);--orange:#d69363;--orange-soft:rgba(214,147,99,.16);--code-bg:rgba(0,0,0,.22);--mark-bg:rgba(214,168,95,.32);--ubg:#243a34;--abg:transparent;--ts:16px;--bs:14px;--fs:15px;--safe-t:env(safe-area-inset-top);--safe-b:env(safe-area-inset-bottom);--sw:260px;--r:4px;--mat-accent:#78bfa6}
@@ -716,7 +716,7 @@ html,body{overflow-x:hidden;max-width:100vw}
 <button class="bbn" onclick="batchAll()">全选</button><button class="bbn" onclick="batchInvert()">反选</button>
 <button class="bbn" onclick="batchRange()">区间</button><button class="bbn" onclick="batchKeep()">保留最新</button>
 <button class="bbn red" onclick="batchDel()">🗑️</button><button class="bbn" onclick="batchMov()">📁</button>
-<button class="bbn" onclick="showDupCheck()">🔍重复</button>
+<button class="bbn" onclick="batchExportPack()">📤</button><button class="bbn" onclick="showDupCheck()">🔍重复</button>
 <span class="bb-info" id="batchInfo">0</span>
 </div></div>
 <div class="sb-tabs"><div class="sb-tab active" data-tab="convs" onclick="switchTab('convs')">对话</div><div class="sb-tab" data-tab="trash" onclick="switchTab('trash')">回收站</div></div>
@@ -768,14 +768,14 @@ html,body{overflow-x:hidden;max-width:100vw}
 </div></div></div>
 <!-- 素材编辑器 -->
 <div class="mat-app" id="matApp"></div>
-<div class="version">v3.1.80</div>
+<div class="version">v3.1.81</div>
 <div class="mo" id="modal"><div class="mo-box" id="moBox"><div class="mo-hdr"><h3 id="moTitle"></h3><button class="mo-cls" onclick="moClose()">×</button></div><div class="mo-body" id="moBody"></div><div class="mo-ftr" id="moFtr"></div></div></div>
 <div class="ctx" id="ctxMenu"></div>
 <div class="ctx" id="convMenu"></div>
 <div class="ctx" id="grpMenu"></div>
 <script>
 // ==================== 公共区 ====================
-const VER='3.1.80',RSN_F=['reasoning_content','reasoning','thinking','thought','inner_monologue'];
+const VER='3.1.81',RSN_F=['reasoning_content','reasoning','thinking','thought','inner_monologue'];
 let _updateChecked=false;
 let materials={chars:{},charOrder:[],rels:{},relIndex:[],apps:{},appOrder:[],appGroups:{},groupOrder:[],metaPrompts:{},metaOrder:[],appKeywords:{},_sourceFile:'',_importedAt:'',_savedAt:''};
 let storyData={timelineYears:[],stories:[]},tlPointsChat=[];
@@ -4048,6 +4048,135 @@ async function doExport(){const sc=document.getElementById('expS').value,fmt=doc
 const _cbs2=buildChatboxSettings();
 d.settings={providers:_cbs2.providers,customProviders:_cbs2.customProviders,favoritedModels:_cbs2.favoritedModels};
 if(_cbs2.sessionSettings.provider)d['chat-session-settings']=_cbs2.sessionSettings;targets.forEach(conv=>{d['chat-sessions-list'].push({id:conv.id,name:conv.name,starred:conv.pinned||false,type:'chat'});const sp=genMatFull(conv.materialConfig);const msgs=[];if(sp)msgs.push({id:gid2(),role:'system',contentParts:[{type:'text',text:sp}]});(conv.messages||[]).forEach(msg=>{const cp=[];if(msg.reasoning)cp.push({type:'reasoning',text:msg.reasoning,duration:msg.reasoningDuration||0});cp.push({type:'text',text:msg.content||''});if(msg.images?.length)cp.push({type:'images',images:msg.images});msgs.push({id:msg.id,role:msg.role,contentParts:cp,timestamp:msg.timestamp?new Date(msg.timestamp).getTime():Date.now(),model:msg.model||'',generating:false})});d[`session:${conv.id}`]={id:conv.id,name:conv.name,type:'chat',starred:conv.pinned||false,messages:msgs,messageForksHash:{},_chatTool:{materialConfig:conv.materialConfig,tempAppendices:conv.tempAppendices||[],groupId:conv.groupId||'_default',convParams:conv.convParams||{},foldGroups:conv.foldGroups||[],foldedMsgIds:conv.foldedMsgIds||[],lockedModel:conv.lockedModel||null}}});dl(fileName+'.json',JSON.stringify(d,null,2),'application/json');hideMo();ok()}
+
+//== batchExportPack ==//
+function batchExportPack(){
+if(!batchSel.size){toast('请先在批量模式中选择要导出的对话');return}
+showSelectedPack()
+}
+
+//== showSelectedPack ==//
+function showSelectedPack(){
+const ids=[...batchSel].filter(id=>convList.some(c=>c.id===id));
+if(!ids.length){toast('选中的对话不存在');return}
+const metas=ids.map(id=>convList.find(c=>c.id===id)).filter(Boolean);
+const imgHint=metas.length?`<div style="font-size:11px;color:var(--tx-m);margin-top:6px">说明：不勾选图片时，会清空消息 images 字段，但保留文字里的「[图片: 文件名]」提示。</div>`:'';
+const starCnt=metas.filter(c=>c.pinned).length;
+let h=`<div style="padding:8px 10px;background:var(--bg-t);border:1px solid var(--bd);border-radius:var(--r);margin-bottom:10px">
+<div style="font-weight:600;margin-bottom:4px">📤 轻量选择包</div>
+<div style="font-size:12px;color:var(--tx-m);line-height:1.5">将导出批量选中的 <strong style="color:var(--ac)">${ids.length}</strong> 个对话${starCnt?`，其中 ⭐置顶 ${starCnt} 个`:''}。选择包不会推进后续“更新包”的同步快照。</div>
+</div>`;
+h+=`<div class="fg"><label>包名</label><input type="text" id="selPackName" value="选择包_${fmtD(new Date())}"></div>`;
+h+=`<div class="ss" style="margin-bottom:10px"><div class="ss-t">包含内容</div>
+<label style="display:flex;align-items:center;gap:6px;padding:7px 8px;background:var(--bg-t);border-radius:var(--r);margin-bottom:5px;cursor:pointer"><input type="checkbox" id="selIncApi" checked style="width:16px;height:16px"> 🔌 API配置 / 当前模型</label>
+<label style="display:flex;align-items:center;gap:6px;padding:7px 8px;background:var(--bg-t);border-radius:var(--r);margin-bottom:5px;cursor:pointer"><input type="checkbox" id="selIncStars" checked style="width:16px;height:16px"> ⭐ 星标模型</label>
+<label style="display:flex;align-items:center;gap:6px;padding:7px 8px;background:var(--bg-t);border-radius:var(--r);margin-bottom:5px;cursor:pointer"><input type="checkbox" id="selIncParams" checked style="width:16px;height:16px"> ⚙️ 参数、UI、快捷短语、分组、价格表/费用设置</label>
+<label style="display:flex;align-items:center;gap:6px;padding:7px 8px;background:var(--bg-t);border-radius:var(--r);margin-bottom:5px;cursor:pointer"><input type="checkbox" id="selIncMat" checked style="width:16px;height:16px"> 📋 当前素材 materials</label>
+<label style="display:flex;align-items:center;gap:6px;padding:7px 8px;background:var(--bg-t);border-radius:var(--r);margin-bottom:5px;cursor:pointer"><input type="checkbox" id="selIncStory" checked style="width:16px;height:16px"> 📅 剧情 stories</label>
+<label style="display:flex;align-items:center;gap:6px;padding:7px 8px;background:var(--bg-t);border-radius:var(--r);margin-bottom:5px;cursor:pointer"><input type="checkbox" id="selIncCost" style="width:16px;height:16px"> 🧾 费用日志（仅选中对话相关）</label>
+<label style="display:flex;align-items:center;gap:6px;padding:7px 8px;background:var(--bg-t);border-radius:var(--r);margin-bottom:5px;cursor:pointer"><input type="checkbox" id="selIncImages" checked style="width:16px;height:16px"> 🖼️ 图片数据</label>
+${imgHint}</div>`;
+h+=`<div class="ss" style="margin-bottom:0"><div class="ss-t">已选对话预览</div><div style="max-height:180px;overflow-y:auto;border:1px solid var(--bd);border-radius:var(--r)">${metas.slice(0,80).map(c=>`<div style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-bottom:1px solid var(--bd);font-size:12px"><span>${c.pinned?'⭐':'💬'}</span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(c.name)}</span><span style="font-size:10px;color:var(--tx-m)">${c.msgCount||0}条</span></div>`).join('')}${metas.length>80?`<div style="padding:6px 8px;font-size:12px;color:var(--tx-m)">还有 ${metas.length-80} 个未显示...</div>`:''}</div></div>`;
+showMoFull('📤 导出选择包',h,`<button class="mo-btn sec" onclick="hideMo()">取消</button><button class="mo-btn pri" onclick="exportSelectedPack()">📤 导出</button>`)
+}
+
+//== buildSelectedPack ==//
+async function buildSelectedPack(opts){
+opts=opts||{};
+const ids=opts.ids||[...batchSel];
+const targets=[];
+const statusEl=document.getElementById('selPackStatus');
+const progFill=document.getElementById('selPackProgFill');
+for(let i=0;i<ids.length;i++){
+const id=ids[i];
+const c=id===curConvId&&curConv?curConv:await loadConvFull(id);
+if(c)targets.push(c);
+if((i%3===0||i===ids.length-1)&&(statusEl||progFill)){
+if(statusEl)statusEl.textContent=`读取对话 ${i+1}/${ids.length}...`;
+if(progFill)progFill.style.width=Math.round((i+1)/Math.max(ids.length,1)*70)+'%';
+await new Promise(r=>setTimeout(r,0))
+}}
+if(!targets.length)throw new Error('没有可导出的对话');
+const now=new Date();
+const dev=isMobile?'PHONE':'PC';
+const d={'_chatToolPackageType':'selected','_chatToolVersion':VER,'__exported_items':['conversations'],'__exported_at':now.toISOString(),'_selectedPackMeta':{device:dev,count:targets.length,includeImages:!!opts.includeImages},configVersion:13,'chat-sessions-list':[]};
+const ct={version:VER,selectedPack:true,selectedAt:now.toISOString()};
+if(opts.includeApi){ct.apiConfigs=apiConfigs;ct.curApiId=curApiId;ct.curModel=curModel}
+if(opts.includeStars)ct.starredModels=starredModels;
+if(opts.includeParams){ct.groups=groups;ct.params=params;ct.uiSettings=uiSettings;ct.shortcuts=shortcuts;ct.quickPhrases=quickPhrases;ct.localMeta=localMeta;ct.priceTable=priceTable;ct.costSettings=costSettings;ct.workspace=workspace}
+if(opts.includeMaterials)ct.materials=materials;
+if(opts.includeStory&&storyData.stories?.length)ct.storyData=storyData;
+d._chatTool=ct;
+if(opts.includeCost){
+const idSet=new Set(targets.map(c=>c.id));
+d._chatToolCostLogs={version:1,savedAt:now.toISOString(),scope:'selectedConversations',items:costLogs.filter(l=>idSet.has(l.convId))}
+}
+const _cbs=buildChatboxSettings();
+if(opts.includeApi||opts.includeStars){
+d.settings={providers:_cbs.providers,customProviders:_cbs.customProviders,favoritedModels:opts.includeStars?_cbs.favoritedModels:[]};
+if(_cbs.sessionSettings.provider)d['chat-session-settings']=_cbs.sessionSettings
+}
+targets.forEach(conv=>{
+d['chat-sessions-list'].push({id:conv.id,name:conv.name,starred:conv.pinned||false,type:'chat'});
+const sp=genMatFull(conv.materialConfig);
+const msgs=[];
+if(sp)msgs.push({id:gid2(),role:'system',contentParts:[{type:'text',text:sp}]});
+(conv.messages||[]).forEach(msg=>{
+const cp=[];
+if(msg.reasoning)cp.push({type:'reasoning',text:msg.reasoning,duration:msg.reasoningDuration||0});
+cp.push({type:'text',text:msg.content||''});
+if(opts.includeImages&&msg.images?.length)cp.push({type:'images',images:msg.images});
+msgs.push({id:msg.id,role:msg.role,contentParts:cp,timestamp:msg.timestamp?new Date(msg.timestamp).getTime():Date.now(),model:msg.model||'',generating:false})
+});
+d[`session:${conv.id}`]={id:conv.id,name:conv.name,type:'chat',starred:conv.pinned||false,messages:msgs,messageForksHash:{},_chatTool:{materialConfig:conv.materialConfig,tempAppendices:conv.tempAppendices||[],groupId:conv.groupId||'_default',convParams:conv.convParams||{},foldGroups:conv.foldGroups||[],foldedMsgIds:conv.foldedMsgIds||[],lockedModel:conv.lockedModel||null,imagesStripped:!opts.includeImages}}
+});
+const safe=(opts.name||'选择包').replace(/[\/\\:*?"<>|]/g,'_').substring(0,60)||'选择包';
+const pad=n=>String(n).padStart(2,'0');
+const fileName=`chattool_selected_${dev}_${safe}_${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}.json`;
+if(statusEl)statusEl.textContent='序列化...';
+if(progFill)progFill.style.width='90%';
+await new Promise(r=>setTimeout(r,0));
+return{fileName,text:JSON.stringify(d,null,2),count:targets.length}
+}
+
+//== exportSelectedPack ==//
+async function exportSelectedPack(){
+const opts={
+ids:[...batchSel],
+name:document.getElementById('selPackName')?.value?.trim()||'选择包',
+includeApi:document.getElementById('selIncApi')?.checked!==false,
+includeStars:document.getElementById('selIncStars')?.checked!==false,
+includeParams:document.getElementById('selIncParams')?.checked!==false,
+includeMaterials:document.getElementById('selIncMat')?.checked!==false,
+includeStory:document.getElementById('selIncStory')?.checked!==false,
+includeCost:document.getElementById('selIncCost')?.checked||false,
+includeImages:document.getElementById('selIncImages')?.checked!==false
+};
+if(!opts.ids.length){toast('未选中对话');return}
+showMo('📤 生成选择包',`<div style="text-align:center;padding:20px"><div id="selPackStatus">准备中...</div><div class="prog-bar"><div class="prog-fill" id="selPackProgFill" style="width:10%"></div></div></div>`,'');
+try{
+await new Promise(r=>setTimeout(r,30));
+const pack=await buildSelectedPack(opts);
+if(isMobile&&navigator.share){
+const shareName=pack.fileName.replace(/\.json$/,'.txt');
+const file=new File([pack.text],shareName,{type:'text/plain'});
+if(!navigator.canShare||navigator.canShare({files:[file]})){
+try{
+hideMo();
+await navigator.share({title:'ChatTool选择包',files:[file]});
+toast('✅ 已分享选择包 ('+pack.count+'个对话)');
+return
+}catch(e){
+if(e.name==='AbortError'){toast('已取消');return}
+}}
+}
+hideMo();
+dl(pack.fileName,pack.text,'application/json');
+toast('✓ 已导出选择包 ('+pack.count+'个对话)')
+}catch(e){
+hideMo();
+toast('❌ 选择包导出失败: '+(e.message||e.name))
+}}
 
 //== showImport ==//
 function showImport(){if(isWriteBlocked('导入对话'))return;if(importLock){toast('导入进行中');return}const inp=document.createElement('input');inp.type='file';inp.accept='.json,.txt';inp.onchange=async e=>{const f=e.target.files[0];if(!f)return;if(!folderH){toast('请先选择文件夹');return}showMo('📥 读取文件',`<div style="text-align:center;padding:20px"><div>正在读取 ${esc(f.name)}...</div><div class="prog-bar"><div class="prog-fill" style="width:30%"></div></div></div>`,'');await new Promise(r=>setTimeout(r,30));try{const data=JSON.parse(await f.text());await analyzeImport(data)}catch(err){toast('解析失败: '+err.message)}};inp.click()}
