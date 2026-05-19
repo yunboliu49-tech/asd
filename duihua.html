@@ -1167,7 +1167,35 @@ const s=starredModels.find(s=>s.apiId===curApiId&&s.model===curModel);
 return s?.params||{}}
 
 //== getEffectiveParams ==//
-function getEffectiveParams(conv){const cp=conv?.convParams||{};const mp=getModelParams();return{temperature:cp.temperature??mp.temperature??params.temperature,maxTokens:cp.maxTokens??mp.maxTokens??params.maxTokens,contextLimit:cp.contextLimit??mp.contextLimit??params.contextLimit,maxInput:cp.maxInput??mp.maxInput??params.maxInput,stream:cp.stream??mp.stream??params.stream,truncateHint:params.truncateHint,reasoningFields:params.reasoningFields,contentTags:params.contentTags||['think','thinking'],parseContentTags:cp.parseContentTags??params.parseContentTags,topP:cp.topP??mp.topP??params.top_p,topK:cp.topK??mp.topK??params.top_k,frequencyPenalty:cp.frequencyPenalty??mp.frequencyPenalty??params.frequency_penalty,presencePenalty:cp.presencePenalty??mp.presencePenalty??params.presence_penalty,mergeSameRole:cp.mergeSameRole??mp.mergeSameRole??params.mergeSameRole}}
+function getEffectiveParams(conv){
+const cp=conv?.convParams||{};
+const mp=getModelParams();
+const pick=v=>v!==null&&v!==undefined&&v!=='';
+const minNum=(...vals)=>{
+const arr=vals.filter(pick).map(v=>Number(v)).filter(v=>!isNaN(v));
+return arr.length?Math.min(...arr):undefined
+};
+const pickFirst=(...vals)=>{
+for(const v of vals){if(pick(v))return v}
+return undefined
+};
+return{
+temperature:pickFirst(mp.temperature,cp.temperature,params.temperature),
+maxTokens:minNum(mp.maxTokens,cp.maxTokens,params.maxTokens),
+contextLimit:pickFirst(mp.contextLimit,cp.contextLimit,params.contextLimit),
+maxInput:minNum(mp.maxInput,cp.maxInput,params.maxInput),
+stream:pickFirst(mp.stream,cp.stream,params.stream),
+truncateHint:params.truncateHint,
+reasoningFields:params.reasoningFields,
+contentTags:params.contentTags||['think','thinking'],
+parseContentTags:pickFirst(mp.parseContentTags,cp.parseContentTags,params.parseContentTags),
+topP:pickFirst(mp.topP,cp.topP,params.top_p),
+topK:pickFirst(mp.topK,cp.topK,params.top_k),
+frequencyPenalty:pickFirst(mp.frequencyPenalty,cp.frequencyPenalty,params.frequency_penalty),
+presencePenalty:pickFirst(mp.presencePenalty,cp.presencePenalty,params.presence_penalty),
+mergeSameRole:pickFirst(mp.mergeSameRole,cp.mergeSameRole,params.mergeSameRole)
+}
+}
 
 //== getMutedFoldGroupInfo ==//
 function getMutedFoldGroupInfo(conv){
