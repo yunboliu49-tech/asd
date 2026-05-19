@@ -668,6 +668,15 @@ html,body{overflow-x:hidden;max-width:100vw}
 .mat-ta,.tree-textarea{max-width:100%;overflow-wrap:anywhere}
 .drag-handle{cursor:grab;user-select:none;-webkit-user-select:none;touch-action:none}
 .drag-handle:active{cursor:grabbing}
+.katex-display{overflow-x:auto;overflow-y:hidden;max-width:100%;padding:4px 2px;margin:6px 0;-webkit-overflow-scrolling:touch}
+.katex-display>.katex{white-space:nowrap;display:inline-block;text-align:left}
+.katex{max-width:100%}
+.msg-body .fallback-block{overflow-x:auto;white-space:pre;max-width:100%;-webkit-overflow-scrolling:touch}
+.msg-body .fallback-inline{word-break:break-all}
+@media(max-width:768px){
+.katex-display{font-size:0.95em}
+.katex-display>.katex{font-size:1em}
+}
 @media(max-width:768px){
 .ch-hdr{max-width:100vw;overflow:hidden}
 .ch-right{flex-shrink:0}
@@ -3105,14 +3114,22 @@ toast('📎 已转为附件 ('+text.length.toLocaleString()+'字)')}
 function addImageAttachment(file){
 if(!file||!file.type.startsWith('image/'))return;
 const reader=new FileReader();
-reader.onload=function(){
+reader.onerror=function(){toast('❌ 读取图片失败')};
+reader.onload=async function(){
 const dataUrl=reader.result;
+if(!dataUrl||typeof dataUrl!=='string'){toast('❌ 读取图片失败');return}
 const img=new Image();
-img.onload=function(){
+try{
+img.src=dataUrl;
+if(img.decode){await img.decode()}
+else{await new Promise((res,rej)=>{img.onload=res;img.onerror=()=>rej(new Error('decode failed'));setTimeout(()=>{if(!img.complete)rej(new Error('decode timeout'))},10000)})}
+}catch(e){toast('❌ 图片解码失败，可能是不支持的格式');return}
+const ow=img.naturalWidth||img.width,oh=img.naturalHeight||img.height;
+if(!ow||!oh){toast('❌ 图片尺寸异常');return}
 const MAX_SIDE=2576;
 const MAX_MP=3750000;
-const QUALITY=0.98;
-let w=img.width,h=img.height;
+const JPEG_Q=0.92;
+let w=ow,h=oh;
 let needResize=false;
 if(w>MAX_SIDE||h>MAX_SIDE){
 if(w>h){h=Math.round(h*MAX_SIDE/w);w=MAX_SIDE}
@@ -3124,17 +3141,45 @@ const scale=Math.sqrt(MAX_MP/(w*h));
 w=Math.round(w*scale);h=Math.round(h*scale);
 needResize=true
 }
+const origMime=(file.type||'').toLowerCase();
+const safeMime=origMime==='image/png'||origMime==='image/jpeg'||origMime==='image/webp'||origMime==='image/gif';
+const isGif=origMime==='image/gif';
+let outUrl=null,outMime=origMime||'image/png';
+if(!needResize&&safeMime&&!isGif){
+outUrl=dataUrl;
+outMime=origMime
+}else if(isGif&&!needResize){
+outUrl=dataUrl;outMime='image/gif'
+}else{
+try{
 const canvas=document.createElement('canvas');
 canvas.width=w;canvas.height=h;
 const ctx2=canvas.getContext('2d');
+if(!ctx2)throw new Error('no canvas ctx');
+ctx2.imageSmoothingEnabled=true;
+ctx2.imageSmoothingQuality='high';
+ctx2.fillStyle='#fff';
+ctx2.fillRect(0,0,w,h);
 ctx2.drawImage(img,0,0,w,h);
-const outUrl=canvas.toDataURL('image/jpeg',QUALITY);
-const base64=outUrl.split(',')[1];
+let useMime='image/jpeg';
+if(origMime==='image/png'){useMime='image/png'}
+const encoded=canvas.toDataURL(useMime,useMime==='image/jpeg'?JPEG_Q:undefined);
+if(!encoded||encoded.length<200){throw new Error('encode failed')}
+outUrl=encoded;
+outMime=useMime
+}catch(e){
+outUrl=dataUrl;
+outMime=origMime||'image/png';
+needResize=false
+}}
+const commaIdx=outUrl.indexOf(',');
+const base64=commaIdx>=0?outUrl.substring(commaIdx+1):'';
+if(!base64){toast('❌ 图片处理失败');return}
 inputAttachments.push({
 id:gid2(),
 type:'image',
 base64,
-mimeType:'image/jpeg',
+mimeType:outMime,
 dataUrl:outUrl,
 width:w,
 height:h,
@@ -3145,9 +3190,7 @@ renderAttachBar();
 updateTokCnt();
 toast('📷 已添加图片'+(needResize?' (已压缩)':''))
 };
-img.src=dataUrl
-};
-reader.readAsDataURL(file)}
+try{reader.readAsDataURL(file)}catch(e){toast('❌ 读取图片失败: '+e.name)}}
 
 //== addImageFromDrop ==//
 function addImageFromDrop(e){
