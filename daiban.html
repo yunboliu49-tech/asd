@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
-<title>待办助手 v1.6.4</title>
+<title>待办助手 v1.6.5</title>
 <style>
 :root{--bg-p:#1a1a2e;--bg-s:#16213e;--bg-t:#0f3460;--tx-p:#e8e8e8;--tx-s:#a0a0a0;--tx-m:#606060;--bd:#2a2a4a;--ac:#4a9eff;--ok:#4ade80;--wn:#fbbf24;--dn:#f87171;--ubg:#1e3a5f;--ts:16px;--bs:14px;--fs:15px;--safe-t:env(safe-area-inset-top);--safe-b:env(safe-area-inset-bottom);--r:6px;--wm-shift:0px;--pri-high:#f87171;--pri-mid:#fbbf24;--pri-low:#a0a0a0;--tab-h:52px}
 [data-theme=light]{--bg-p:#f5f5f5;--bg-s:#fff;--bg-t:#e8e8e8;--tx-p:#1a1a1a;--tx-s:#555;--tx-m:#999;--bd:#e0e0e0;--ubg:#e3f2fd}
@@ -221,7 +221,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;f
 <div class="toolbar">
 <button class="tb wm-tb" id="wmBtn" onclick="toggleWmShift()">🛡️</button>
 <button class="tb" id="fldBtn" onclick="selectFolder()">📁</button>
-<span class="toolbar-title">📝 待办助手 <span class="toolbar-ver">v1.6.4</span></span>
+<span class="toolbar-title">📝 待办助手 <span class="toolbar-ver">v1.6.5</span></span>
 <span class="fld-st" id="fldSt">未连接</span>
 </div>
 <div class="tab-panes">
@@ -245,7 +245,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;f
 <div class="ctx" id="ctxMenu"></div>
 <div class="date-jump" id="dateJump"></div>
 <script>
-const VER='1.6.4',RSN_F=['reasoning_content','reasoning','thinking'];
+const VER='1.6.5',RSN_F=['reasoning_content','reasoning','thinking'];
 const TABS={today:'paneToday',plan:'panePlan',tasks:'paneTasks',ai:'paneAi',settings:'paneSettings',memory:'paneMemory'};
 const MEM_CATS=['偏好','个人信息','规则','备忘'];
 const SUM_LEVELS={conservative:{day:30,week:90,month:240},normal:{day:21,week:60,month:180},aggressive:{day:7,week:21,month:60}};
@@ -563,7 +563,7 @@ function timeToY(ts,sch,rowH){const mins=timeToMinutes(ts),slots=sch.timeSlots||
 
 
 //== initWeekViewScroll ==//
-function initWeekViewScroll(){const gs=document.getElementById('wvGS');if(!gs)return;scrollWeekToDate(planViewDate);let sx=0,sy=0,locked=null;gs.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;locked=null},{passive:true});gs.addEventListener('touchmove',e=>{if(locked)return;const dx=Math.abs(e.touches[0].clientX-sx),dy=Math.abs(e.touches[0].clientY-sy);if(dx+dy<8)return;const cy=e.touches[0].clientY,maxST=gs.scrollHeight-gs.clientHeight;const atTop=gs.scrollTop<=0&&cy>sy,atBot=gs.scrollTop>=maxST-1&&cy<sy;if(atTop||atBot)locked='h';else locked=dx>dy*.7?'h':'v';if(locked==='v')gs.style.overflowX='hidden';else if(locked==='h')gs.style.overflowY='hidden'},{passive:true});const unlock=()=>{gs.style.overflowX='';gs.style.overflowY='';locked=null};gs.addEventListener('touchend',unlock,{passive:true});gs.addEventListener('touchcancel',unlock,{passive:true});runWeekScrollSync()}
+function initWeekViewScroll(){const gs=document.getElementById('wvGS');if(!gs)return;scrollWeekToDate(planViewDate);let sx=0,sy=0,locked=null;gs.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;locked=null},{passive:true});gs.addEventListener('touchmove',e=>{if(locked)return;const dx=Math.abs(e.touches[0].clientX-sx),dy=Math.abs(e.touches[0].clientY-sy);if(dx+dy<8)return;const cy=e.touches[0].clientY,maxST=gs.scrollHeight-gs.clientHeight;const atTop=gs.scrollTop<=0&&cy>sy,atBot=gs.scrollTop>=maxST-1&&cy<sy;if(atTop||atBot)locked='h';else locked=dx>dy*.7?'h':'v';if(locked==='v')gs.style.overflowX='hidden';else if(locked==='h')gs.style.overflowY='hidden'},{passive:true});const unlock=()=>{gs.style.overflowX='';gs.style.overflowY='';locked=null};gs.addEventListener('touchend',unlock,{passive:true});gs.addEventListener('touchcancel',unlock,{passive:true});let mDown=false,mSx=0,mSy=0,mSL=0,mST=0,mMoved=false;gs.addEventListener('mousedown',e=>{if(e.button!==0)return;if(e.target.closest('.wv-entry')||e.target.closest('.wv-conflict-badge'))return;mDown=true;mMoved=false;mSx=e.clientX;mSy=e.clientY;mSL=gs.scrollLeft;mST=gs.scrollTop;gs.style.cursor='grabbing';e.preventDefault()});window.addEventListener('mousemove',e=>{if(!mDown)return;const dx=e.clientX-mSx,dy=e.clientY-mSy;if(!mMoved&&Math.abs(dx)+Math.abs(dy)<5)return;mMoved=true;gs.scrollLeft=mSL-dx;gs.scrollTop=mST-dy});window.addEventListener('mouseup',e=>{if(!mDown)return;mDown=false;gs.style.cursor='';if(mMoved){const blocker=ev=>{ev.stopPropagation();ev.preventDefault();window.removeEventListener('click',blocker,true)};window.addEventListener('click',blocker,true);setTimeout(()=>window.removeEventListener('click',blocker,true),50)}});runWeekScrollSync()}
 
 //== onWeekScroll ==//
 function onWeekScroll(){if(_wvScrollRaf)return;_wvScrollRaf=requestAnimationFrame(()=>{_wvScrollRaf=0;runWeekScrollSync()})}
