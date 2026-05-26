@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
-<title>创作对话工具 v3.1.85</title>
+<title>创作对话工具 v3.1.87</title>
 <style>
 
 :root{--bg-p:#151513;--bg-s:#1d1d1a;--bg-t:#282824;--tx-p:#e8e3d8;--tx-s:#b6afa2;--tx-m:#777065;--bd:#37362f;--ac:#78bfa6;--ach:#66ad95;--ac-soft:rgba(120,191,166,.14);--ok:#79c58e;--ok-soft:rgba(121,197,142,.16);--wn:#d6a85f;--wn-soft:rgba(214,168,95,.16);--dn:#d9827b;--dn-soft:rgba(217,130,123,.16);--purple:#b68ac8;--purple-soft:rgba(182,138,200,.14);--pink:#d887a8;--pink-soft:rgba(216,135,168,.16);--gold:#d6a85f;--gold-soft:rgba(214,168,95,.16);--indigo:#8d9cc8;--indigo-soft:rgba(141,156,200,.14);--orange:#d69363;--orange-soft:rgba(214,147,99,.16);--code-bg:rgba(0,0,0,.22);--mark-bg:rgba(214,168,95,.32);--ubg:#243a34;--abg:transparent;--ts:16px;--bs:14px;--fs:15px;--safe-t:env(safe-area-inset-top);--safe-b:env(safe-area-inset-bottom);--sw:260px;--r:4px;--mat-accent:#78bfa6}
@@ -777,14 +777,14 @@ html,body{overflow-x:hidden;max-width:100vw}
 </div></div></div>
 <!-- 素材编辑器 -->
 <div class="mat-app" id="matApp"></div>
-<div class="version">v3.1.85</div>
+<div class="version">v3.1.87</div>
 <div class="mo" id="modal"><div class="mo-box" id="moBox"><div class="mo-hdr"><h3 id="moTitle"></h3><button class="mo-cls" onclick="moClose()">×</button></div><div class="mo-body" id="moBody"></div><div class="mo-ftr" id="moFtr"></div></div></div>
 <div class="ctx" id="ctxMenu"></div>
 <div class="ctx" id="convMenu"></div>
 <div class="ctx" id="grpMenu"></div>
 <script>
 // ==================== 公共区 ====================
-const VER='3.1.85',RSN_F=['reasoning_content','reasoning','thinking','thought','inner_monologue'];
+const VER='3.1.87',RSN_F=['reasoning_content','reasoning','thinking','thought','inner_monologue'];
 let _updateChecked=false;
 let materials={chars:{},charOrder:[],rels:{},relIndex:[],apps:{},appOrder:[],appGroups:{},groupOrder:[],metaPrompts:{},metaOrder:[],appKeywords:{},_sourceFile:'',_importedAt:'',_savedAt:''};
 let storyData={timelineYears:[],stories:[]},tlPointsChat=[];
@@ -4398,7 +4398,7 @@ let _matDirty=false;
 function fmtCny(v){if(v===null||v===undefined||isNaN(v))return'--';if(v===0)return'0';return v<0.01&&v>0?v.toFixed(4):v<1?v.toFixed(3):v<100?v.toFixed(2):v.toFixed(1)}
 
 //== getModelPrice ==//
-function getModelPrice(apiId,model){if(!apiId||!model)return null;return priceTable[apiId+'||'+model]||null}
+function getModelPrice(apiId,model){if(!apiId||!model)return null;const p=priceTable[apiId+'||'+model];if(!p)return null;const b=String(p.billing||'').toLowerCase();if(b==='request'||b==='token')return p;if(b.includes('按量')||b.includes('token'))p.billing='token';else if(b.includes('按次')||b.includes('request')||b.includes('req')||b.includes('call'))p.billing='request';else if(p.inputPerM!=null||p.outputPerM!=null)p.billing='token';else if(p.perReq!=null)p.billing='request';return p}
 
 //== estimateCost ==//
 function estimateCost(apiId,model,inputTok,outputTok){const p=getModelPrice(apiId,model);if(!p)return null;if(p.billing==='request')return p.perReq||0;return(inputTok||0)/1e6*(p.inputPerM||0)+(outputTok||0)/1e6*(p.outputPerM||0)}
@@ -4509,7 +4509,7 @@ function showPriceImport(){const apiOpts=apiConfigs.map(c=>`<option value="${c.i
 function doPriceImport(){const apiId=document.getElementById('piApi').value;const fmt=document.getElementById('piFmt').value;const text=document.getElementById('piText').value.trim();if(!apiId){toast('请选择API');return}if(!text){toast('请粘贴数据');return}const cfg=apiConfigs.find(c=>c.id===apiId);const apiName=cfg?.name||'?';let items=[];if(fmt==='json'){const r=parsePriceJSON(text);if(r.error){toast('解析失败: '+r.error);return}items=r.items}else{const r=parsePriceMarkdown(text);if(r.error){toast('解析失败: '+r.error);return}items=r.items}if(!items.length){toast('未解析到有效数据');return}let added=0,updated=0;items.forEach(it=>{const k=apiId+'||'+it.model;const isNew=!priceTable[k];priceTable[k]={apiId,apiName,model:it.model,billing:it.billing,perReq:it.perReq!=null?it.perReq:null,inputPerM:it.inputPerM!=null?it.inputPerM:null,outputPerM:it.outputPerM!=null?it.outputPerM:null,cacheReadPerM:it.cacheReadPerM!=null?it.cacheReadPerM:null,cacheCreatePerM:it.cacheCreatePerM!=null?it.cacheCreatePerM:null,note:it.note||'',updatedAt:new Date().toISOString()};if(isNew)added++;else updated++});saveCfg();popMo(true);toast(`✓ 导入${items.length}条 (新增${added}, 更新${updated})`)}
 
 //== parsePriceJSON ==//
-function parsePriceJSON(text){try{const d=JSON.parse(text);const items=d.items||d;if(!Array.isArray(items))return{error:'需要items数组',items:[]};return{items:items.filter(it=>it.model&&it.billing).map(it=>({model:String(it.model).trim(),billing:it.billing,perReq:it.perReq!=null?parseFloat(it.perReq):null,inputPerM:it.inputPerM!=null?parseFloat(it.inputPerM):null,outputPerM:it.outputPerM!=null?parseFloat(it.outputPerM):null,cacheReadPerM:it.cacheReadPerM!=null?parseFloat(it.cacheReadPerM):null,cacheCreatePerM:it.cacheCreatePerM!=null?parseFloat(it.cacheCreatePerM):null,note:it.note||''}))}}catch(e){return{error:e.message,items:[]}}}
+function parsePriceJSON(text){try{const d=JSON.parse(text);const items=d.items||d;if(!Array.isArray(items))return{error:'需要items数组',items:[]};return{items:items.filter(it=>it.model&&it.billing).map(it=>{const br=String(it.billing||'').toLowerCase();let billing;if(br.includes('按量')||br.includes('token'))billing='token';else if(br.includes('按次')||br.includes('request')||br.includes('req')||br.includes('call'))billing='request';else if(it.inputPerM!=null||it.outputPerM!=null)billing='token';else if(it.perReq!=null)billing='request';else billing='request';return{model:String(it.model).trim(),billing,perReq:it.perReq!=null?parseFloat(it.perReq):null,inputPerM:it.inputPerM!=null?parseFloat(it.inputPerM):null,outputPerM:it.outputPerM!=null?parseFloat(it.outputPerM):null,cacheReadPerM:it.cacheReadPerM!=null?parseFloat(it.cacheReadPerM):null,cacheCreatePerM:it.cacheCreatePerM!=null?parseFloat(it.cacheCreatePerM):null,note:it.note||''}})}}catch(e){return{error:e.message,items:[]}}}
 
 //== parsePriceMarkdown ==//
 function parsePriceMarkdown(text){const lines=text.trim().split('\n').filter(l=>l.includes('|'));if(lines.length<3)return{error:'表格行数不足',items:[]};const parseCols=line=>{const c=line.split('|').map(s=>s.trim());if(c[0]==='')c.shift();if(c.length&&c[c.length-1]==='')c.pop();return c};const hdrs=parseCols(lines[0]);const findC=(...kw)=>hdrs.findIndex(h=>kw.some(k=>h.includes(k)));const mc=findC('模型','model','Model');const bc=findC('计费','billing','类型');const rc=findC('单次','per_req','按次');const ic=findC('输入','input','Input');const oc=findC('输出','output','补全','Output','completion');if(mc===-1)return{error:'未找到模型列',items:[]};const extractNum=s=>{if(!s||s==='—'||s==='-'||s.trim()==='—'||s.trim()==='-')return null;const m=s.match(/[\d.]+/);return m?parseFloat(m[0]):null};const items=[];for(let i=1;i<lines.length;i++){const raw=lines[i];if(raw.includes('---')||raw.includes(':--'))continue;const cols=parseCols(raw);if(cols.length<=mc)continue;const model=cols[mc]?.trim();if(!model)continue;const billingRaw=bc>=0&&cols[bc]?cols[bc].trim():'';const perReq=rc>=0&&cols[rc]?extractNum(cols[rc]):null;const inputP=ic>=0&&cols[ic]?extractNum(cols[ic]):null;const outputP=oc>=0&&cols[oc]?extractNum(cols[oc]):null;let billing='request';if(billingRaw.includes('按量')||billingRaw.toLowerCase().includes('token'))billing='token';else if(billingRaw.includes('按次')||billingRaw.toLowerCase().includes('request'))billing='request';else if(inputP!=null&&perReq==null)billing='token';else if(perReq!=null)billing='request';else continue;items.push({model,billing,perReq:billing==='request'?perReq:null,inputPerM:billing==='token'?inputP:null,outputPerM:billing==='token'?outputP:null})}return{items}}
