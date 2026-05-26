@@ -154,6 +154,14 @@ label.wsLabel input{accent-color:#3a7cc8}
 .del-char{background:#6e2929;border-radius:2px}
 .ins-char{background:#296e29;border-radius:2px}
 .row.cur-group .cell-txA,.row.cur-group .cell-txB{box-shadow:inset 3px 0 0 #f0c050}
+.cell-tx.edit-cell{cursor:text;outline:none;border:1px solid transparent;min-height:22px}
+.cell-tx.edit-cell:focus{border-color:#3a7cc8;background:#2d2d2d!important}
+.cell-tx.edit-placeholder{background:#161616!important;color:#444!important}
+.row-acts{display:none;gap:3px;padding:0 4px;align-items:center;flex-shrink:0}
+.row:hover .row-acts{display:flex}
+.row-acts button{padding:0 6px;font-size:11px;line-height:18px;background:#3c3c3c;border:1px solid #555;border-radius:3px;color:#aaa;cursor:pointer}
+.row-acts button:hover{background:#4c4c4c;color:#fff}
+.row-acts button.del-row:hover{background:#5c1e1e;border-color:#a82d2d;color:#f08080}
 #statsBar{background:#252526;border-top:1px solid #444;padding:6px 16px;font-size:12px;color:#888;flex-shrink:0;display:none}
 /*== 对话模式视图 ==*/
 #chatView{flex:1;display:none;flex-direction:column;overflow:hidden}
@@ -395,6 +403,9 @@ label.wsLabel{font-size:11px}
 <div class="topSpacer"></div>
 <div id="diffTools">
 <button class="tbtn" onclick="backToEdit()">← 返回编辑</button>
+<button class="tbtn" id="btnDiffEdit" onclick="diffEditEnter()">✏️ 编辑</button>
+<button class="tbtn green" id="btnDiffSave" style="display:none" onclick="diffEditSave()">💾 保存</button>
+<button class="tbtn" id="btnDiffCancel" style="display:none" onclick="diffEditCancel()">✕ 放弃</button>
 <label class="wsLabel"><input type="checkbox" id="cbWS" onchange="runDiff()">忽略空白</label>
 <span style="color:#555">│</span>
 <button class="tbtn" onclick="navDiff(-1)">◀</button><span id="navInfo">-</span><button class="tbtn" onclick="navDiff(1)">▶</button>
@@ -446,6 +457,7 @@ label.wsLabel{font-size:11px}
 
 <script>
 let diffRows=[],diffGroups=[],curGroup=-1,ignoreWS=false;
+let diffEditMode=false,diffEditSnapA='',diffEditSnapB='';
 let curMode='diff',_prevMode='diff',_returnToChat=false;
 let patchResultText='',patchReport=[],patchMeta={},patchReportDisplay=[];
 let patchOriginalText='',patchInstructionText='',patchManualChoices={},patchFuzzyCandidates={};
@@ -466,7 +478,7 @@ let agentMode=false,agentRunning=false,agentRound=0,agentMaxRounds=5,agentIterat
 let aiMemory='';
 let chatTextMode=false,viewIdStore={},viewIdCounter=0;
 
-const VER='1.2.4';
+const VER='1.2.6';
 //== toast ==//
 function toast(msg,color){document.querySelectorAll('.toast-msg').forEach(t=>t.remove());const t=document.createElement('div');t.className='toast-msg';t.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#252526;color:#e0e0e0;padding:8px 18px;border-radius:4px;border:1px solid #555;z-index:3000;font-size:13px;box-shadow:0 4px 12px rgba(0,0,0,.3);max-width:90vw;text-align:center;font-family:inherit';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2500)}
 
@@ -778,7 +790,7 @@ function checkUnique(code,searchText){const positions=getAllMatchPositions(code,
 function promptVersionBump(){if(!patchResultText)return;const pats=[/const\s+VER\s*=\s*'(\d+\.\d+\.\d+)'/,/const\s+APP_VER\s*=\s*'(\d+\.\d+\.\d+)'/,/const\s+VERSION\s*=\s*'(\d+\.\d+\.\d+)'/,/const\s+APP_VERSION\s*=\s*'(\d+\.\d+\.\d+)'/];let vm=null,matchPat=null;for(const p of pats){vm=patchResultText.match(p);if(vm){matchPat=p;break}}if(!vm)return;const cv=vm[1],parts=cv.split('.'),av=parts[0]+'.'+parts[1]+'.'+(parseInt(parts[2])+1);const box=document.createElement('div');box.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;z-index:2000;display:flex;align-items:center;justify-content:center';box.innerHTML='<div style="position:absolute;inset:0;background:rgba(0,0,0,0.6)" onclick="this.parentElement.remove()"></div><div style="position:relative;background:#1e1e1e;border:1px solid #555;border-radius:8px;padding:24px;min-width:320px;max-width:90vw"><div style="font-size:15px;font-weight:600;color:#e0e0e0;margin-bottom:16px">📦 更新版本号</div><div style="font-size:13px;color:#aaa;margin-bottom:12px">当前:<span style="color:#f0c050;font-weight:600">v'+cv+'</span></div><div style="display:flex;gap:8px;align-items:center;margin-bottom:16px"><span style="font-size:13px;color:#ccc">新版本:</span><input type="text" id="verInput" value="'+av+'" style="flex:1;padding:6px 10px;background:#2d2d2d;color:#e0e0e0;border:1px solid #555;border-radius:4px;font-size:14px;font-family:inherit"></div><div style="display:flex;gap:8px;justify-content:flex-end"><button class="tbtn" onclick="this.closest(\'[style*=fixed]\').remove()">跳过</button><button class="tbtn primary" onclick="execVersionBump(\''+cv+'\')">✓ 确认</button></div></div>';document.body.appendChild(box);setTimeout(()=>{const inp=document.getElementById('verInput');if(inp){inp.focus();inp.select()}},50)}
 
 //== execVersionBump ==//
-function execVersionBump(oldVer){const inp=document.getElementById('verInput');if(!inp)return;const nv=inp.value.trim();if(!nv||!/^\d+\.\d+\.\d+$/.test(nv)){alert('格式不对');return}if(nv===oldVer){inp.closest('[style*=fixed]').remove();return}let count=0;const verPats=[[/VER\s*=\s*'/,'VER'],[/APP_VER\s*=\s*'/,'APP_VER'],[/VERSION\s*=\s*'/,'VERSION'],[/APP_VERSION\s*=\s*'/,'APP_VERSION']];for(const[pat,name]of verPats){const vs=name+"='"+oldVer+"'",nvs=name+"='"+nv+"'";if(patchResultText.indexOf(vs)!==-1){patchResultText=patchResultText.replace(vs,nvs);count++}}const vo='v'+oldVer,vn='v'+nv;let si=0;while(true){const fi=patchResultText.indexOf(vo,si);if(fi===-1)break;const before=fi>0?patchResultText[fi-1]:'',after=fi+vo.length<patchResultText.length?patchResultText[fi+vo.length]:'';if(/[0-9.]/.test(before)||/[0-9]/.test(after)){si=fi+1;continue}patchResultText=patchResultText.substring(0,fi)+vn+patchResultText.substring(fi+vo.length);count++;si=fi+vn.length}if(count>0){document.getElementById('txB').value=patchResultText;runDiffInternal(document.getElementById('txA').value,patchResultText)}inp.closest('[style*=fixed]').remove();toast(count>0?'✓ v'+oldVer+' → v'+nv+' ('+count+'处)':'⚠️ 未找到')}
+function execVersionBump(oldVer){const inp=document.getElementById('verInput');if(!inp)return;const nv=inp.value.trim();if(!nv||!/^\d+\.\d+\.\d+$/.test(nv)){alert('格式不对');return}if(nv===oldVer){inp.closest('[style*=fixed]').remove();return}let count=0;const verPats=[[/VER\s*=\s*'/,'VER'],[/APP_VER\s*=\s*'/,'APP_VER'],[/VERSION\s*=\s*'/,'VERSION'],[/APP_VERSION\s*=\s*'/,'APP_VERSION']];for(const[pat,name]of verPats){const vs=name+"='"+oldVer+"'",nvs=name+"='"+nv+"'";if(patchResultText.indexOf(vs)!==-1){patchResultText=patchResultText.replace(vs,nvs);count++}}const vo='v'+oldVer,vn='v'+nv;let si=0;while(true){const fi=patchResultText.indexOf(vo,si);if(fi===-1)break;const before=fi>0?patchResultText[fi-1]:'',after=fi+vo.length<patchResultText.length?patchResultText[fi+vo.length]:'';if(/[0-9.]/.test(before)||/[0-9]/.test(after)){si=fi+1;continue}patchResultText=patchResultText.substring(0,fi)+vn+patchResultText.substring(fi+vo.length);count++;si=fi+vn.length}if(count>0){document.getElementById('txB').value=patchResultText;runDiffInternal(patchOriginalText||document.getElementById('txA').value,patchResultText)}inp.closest('[style*=fixed]').remove();toast(count>0?'✓ v'+oldVer+' → v'+nv+' ('+count+'处)':'⚠️ 未找到')}
 
 //== scanPatchRisks ==//
 function scanPatchRisks(original,result,report){const warnings=[];report.forEach((r,i)=>{if(r.level!=='ok')return;if(r.text.includes('替换函数')||r.text.includes('替换CSS块')){const nameM=r.text.match(/\[(.+?)\]/);if(!nameM)return;const name=nameM[1];const isFunc=r.text.includes('替换函数');const bounds=isFunc?findFuncBounds(original,name):findCSSBlockBounds(original,name);if(!bounds)return;const deleted=original.substring(bounds.start,bounds.end);const otherMarkers=[];if(isFunc){deleted.replace(/\/\/== (.+?) ==\/\//g,(m,n)=>{if(n!==name)otherMarkers.push(n)})}else{deleted.replace(/\/\*== (.+?) ==\*\//g,(m,n)=>{if(n!==name)otherMarkers.push(n)})}const untaggedFuncs=[];deleted.replace(/\bfunction\s+([a-zA-Z_$][a-zA-Z0-9_$]*)\s*\(/g,(m,n)=>{untaggedFuncs.push(n)});if(otherMarkers.length)warnings.push({patchIdx:i,text:'⚠️ 替换 ['+name+'] 的删除范围包含其他标记: '+otherMarkers.join(', ')});if(untaggedFuncs.length>3)warnings.push({patchIdx:i,text:'⚠️ 替换 ['+name+'] 的删除范围包含 '+untaggedFuncs.length+' 个未标记函数'})}if(r.text.includes('首尾替换')){const rangeM=r.text.match(/(\d+)→(\d+)行/);if(rangeM&&parseInt(rangeM[1])>100)warnings.push({patchIdx:i,text:'⚠️ 首尾替换范围 '+rangeM[1]+' 行，较大'})}});return warnings}
@@ -875,9 +887,31 @@ function renderResults(){const c=document.getElementById('diffTable');c.innerHTM
 function navDiff(dir){if(!diffGroups.length)return;const prev=curGroup;if(dir===1)curGroup=curGroup<diffGroups.length-1?curGroup+1:0;else curGroup=curGroup>0?curGroup-1:diffGroups.length-1;if(prev>=0)document.querySelectorAll('[data-group="'+prev+'"]').forEach(r=>r.classList.remove('cur-group'));document.querySelectorAll('[data-group="'+curGroup+'"]').forEach(r=>r.classList.add('cur-group'));diffGroups[curGroup].el?.scrollIntoView({behavior:'smooth',block:'center'});document.getElementById('navInfo').textContent=(curGroup+1)+'/'+diffGroups.length}
 
 //== backToEdit ==//
-function backToEdit(){if(_returnToChat||curMode==='chat'){document.getElementById('chatView').style.display='flex';document.getElementById('inputView').style.display='none';_returnToChat=false;if(patchResultText){document.getElementById('txA').value=patchResultText}updateChatCodeInfo()}else{document.getElementById('inputView').style.display='flex';document.getElementById('chatView').style.display='none'}document.getElementById('diffView').style.display='none';document.getElementById('diffTools').style.display='none';document.getElementById('statsBar').style.display='none';document.getElementById('reportBar').style.display='none'}
+function backToEdit(){if(diffEditMode){if(!confirm('当前在diff编辑模式，未保存的修改将丢失，确认返回？'))return;diffEditMode=false;const eb=document.getElementById('btnDiffEdit'),sb=document.getElementById('btnDiffSave'),cb=document.getElementById('btnDiffCancel');if(eb)eb.style.display='';if(sb)sb.style.display='none';if(cb)cb.style.display='none'}if(_returnToChat||curMode==='chat'){document.getElementById('chatView').style.display='flex';document.getElementById('inputView').style.display='none';_returnToChat=false;if(patchResultText){document.getElementById('txA').value=patchResultText}updateChatCodeInfo()}else{document.getElementById('inputView').style.display='flex';document.getElementById('chatView').style.display='none'}document.getElementById('diffView').style.display='none';document.getElementById('diffTools').style.display='none';document.getElementById('statsBar').style.display='none';document.getElementById('reportBar').style.display='none'}
 
-// ==================== 对话模式 ====================
+//== diffEditEnter ==//
+function diffEditEnter(){if(!diffRows.length){toast('无内容');return}diffEditMode=true;diffEditSnapA=document.getElementById('txA').value;diffEditSnapB=document.getElementById('txB').value;document.getElementById('btnDiffEdit').style.display='none';document.getElementById('btnDiffSave').style.display='';document.getElementById('btnDiffCancel').style.display='';diffEditRender();toast('✏️ 编辑模式（回车禁用，➕加行）')}
+
+//== diffEditCancel ==//
+function diffEditCancel(){diffEditMode=false;document.getElementById('btnDiffEdit').style.display='';document.getElementById('btnDiffSave').style.display='none';document.getElementById('btnDiffCancel').style.display='none';renderResults()}
+
+//== diffEditSave ==//
+function diffEditSave(){const rows=document.querySelectorAll('#diffTable .row');const linesA=[],linesB=[];rows.forEach(row=>{const cA=row.querySelector('.cell-txA'),cB=row.querySelector('.cell-txB');if(!cA||!cB)return;const tA=cA.innerText.replace(/\n/g,''),tB=cB.innerText.replace(/\n/g,'');if(cA.dataset.place!=='true')linesA.push(tA);if(cB.dataset.place!=='true')linesB.push(tB)});const newA=linesA.join('\n'),newB=linesB.join('\n');document.getElementById('txA').value=newA;document.getElementById('txB').value=newB;patchResultText=newB;if(newA!==diffEditSnapA||newB!==diffEditSnapB)pushModHist('diff视图编辑',diffEditSnapA,newA);diffEditMode=false;document.getElementById('btnDiffEdit').style.display='';document.getElementById('btnDiffSave').style.display='none';document.getElementById('btnDiffCancel').style.display='none';ignoreWS=document.getElementById('cbWS').checked;runDiffInternal(newA,newB);curGroup=-1;if(diffGroups.length>0)navDiff(1);updateChatCodeInfo();toast('✓ 已保存')}
+
+//== diffEditRender ==//
+function diffEditRender(){const c=document.getElementById('diffTable');c.innerHTML='';const frag=document.createDocumentFragment();diffRows.forEach((r,i)=>{const row=document.createElement('div');row.className='row row-'+r.type;row.dataset.idx=i;const phA=r.type==='ins',phB=r.type==='del';row.innerHTML='<div class="cell-ln cell-lnA">'+(r.lineA||'')+'</div><div class="cell-tx cell-txA edit-cell'+(phA?' edit-placeholder':'')+'" contenteditable="true" data-place="'+(phA?'true':'false')+'" oninput="diffEditCellInput(this)" onkeydown="diffEditCellKey(event,this)">'+esc(r.textA||'')+'</div><div class="gutter"></div><div class="cell-ln cell-lnB">'+(r.lineB||'')+'</div><div class="cell-tx cell-txB edit-cell'+(phB?' edit-placeholder':'')+'" contenteditable="true" data-place="'+(phB?'true':'false')+'" oninput="diffEditCellInput(this)" onkeydown="diffEditCellKey(event,this)">'+esc(r.textB||'')+'</div><div class="row-acts"><button onclick="diffEditAddRow(this)" title="后插入空行">➕</button><button class="del-row" onclick="diffEditDelRow(this)" title="删除整行">🗑️</button></div>';frag.appendChild(row)});c.appendChild(frag)}
+
+//== diffEditCellInput ==//
+function diffEditCellInput(el){if(el.dataset.place==='true'&&el.innerText.length>0){el.dataset.place='false';el.classList.remove('edit-placeholder')}}
+
+//== diffEditCellKey ==//
+function diffEditCellKey(e,el){if(e.key==='Enter'){e.preventDefault()}else if(e.key==='Escape'){e.preventDefault();el.blur()}}
+
+//== diffEditAddRow ==//
+function diffEditAddRow(btn){const row=btn.closest('.row');if(!row)return;const newRow=document.createElement('div');newRow.className='row row-eq';newRow.innerHTML='<div class="cell-ln cell-lnA"></div><div class="cell-tx cell-txA edit-cell edit-placeholder" contenteditable="true" data-place="true" oninput="diffEditCellInput(this)" onkeydown="diffEditCellKey(event,this)"></div><div class="gutter"></div><div class="cell-ln cell-lnB"></div><div class="cell-tx cell-txB edit-cell edit-placeholder" contenteditable="true" data-place="true" oninput="diffEditCellInput(this)" onkeydown="diffEditCellKey(event,this)"></div><div class="row-acts"><button onclick="diffEditAddRow(this)" title="后插入空行">➕</button><button class="del-row" onclick="diffEditDelRow(this)" title="删除整行">🗑️</button></div>';row.after(newRow);newRow.querySelector('.cell-txA').focus()}
+
+//== diffEditDelRow ==//
+function diffEditDelRow(btn){const row=btn.closest('.row');if(row)row.remove()}
 
 //== updateChatApiUI ==//
 function updateChatApiUI(){const cfg=getAllApis().find(a=>a.id===chatApiId);document.getElementById('chatApiTxt').textContent=cfg?cfg.name:'--渠道--';document.getElementById('chatMdlTxt').textContent=chatModel||'--模型--'}
