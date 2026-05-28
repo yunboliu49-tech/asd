@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
-<title>创作对话工具 v3.1.89</title>
+<title>创作对话工具 v3.1.87</title>
 <style>
 
 :root{--bg-p:#151513;--bg-s:#1d1d1a;--bg-t:#282824;--tx-p:#e8e3d8;--tx-s:#b6afa2;--tx-m:#777065;--bd:#37362f;--ac:#78bfa6;--ach:#66ad95;--ac-soft:rgba(120,191,166,.14);--ok:#79c58e;--ok-soft:rgba(121,197,142,.16);--wn:#d6a85f;--wn-soft:rgba(214,168,95,.16);--dn:#d9827b;--dn-soft:rgba(217,130,123,.16);--purple:#b68ac8;--purple-soft:rgba(182,138,200,.14);--pink:#d887a8;--pink-soft:rgba(216,135,168,.16);--gold:#d6a85f;--gold-soft:rgba(214,168,95,.16);--indigo:#8d9cc8;--indigo-soft:rgba(141,156,200,.14);--orange:#d69363;--orange-soft:rgba(214,147,99,.16);--code-bg:rgba(0,0,0,.22);--mark-bg:rgba(214,168,95,.32);--ubg:#243a34;--abg:transparent;--ts:16px;--bs:14px;--fs:15px;--safe-t:env(safe-area-inset-top);--safe-b:env(safe-area-inset-bottom);--sw:260px;--r:4px;--mat-accent:#78bfa6}
@@ -771,20 +771,20 @@ html,body{overflow-x:hidden;max-width:100vw}
 </div>
 <div class="input-area"><div class="input-wrap">
 <div class="stop-bar" id="stopBar"><div class="stop-hdr" onclick="tglStopDet()" style="cursor:pointer"><span class="t-cnt" id="taskCnt">生成中 0</span><button class="stop-all" id="stopAllBtn" onclick="sp();stopLast()">⏹停止</button></div><div class="stop-det" id="stopDet"></div></div>
-<div id="attachBar" style="display:none"></div><div class="input-box"><textarea id="userIn" placeholder="输入消息..." rows="1" onkeydown="handleKey(event)" oninput="autoRsz(this);updateTokCnt()"></textarea><button class="mob-attach" id="mobAttach" onclick="showAttachMenu()">📎</button><button class="mob-send" id="mobSend"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></button><div class="in-btns"><button class="sb2" onclick="showAttachMenu()">📎</button><button class="sb2" onclick="saveMsg()">💾</button><button class="sb2 pri" onclick="sendMsg()">📤</button></div></div>
+<div id="attachBar" style="display:none"></div><div class="input-box"><button class="mob-send" id="mobSend"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></button><button class="mob-attach" id="mobAttach" onclick="showAttachMenu()">📎</button><textarea id="userIn" placeholder="输入消息..." rows="1" onkeydown="handleKey(event)" oninput="autoRsz(this);updateTokCnt()"></textarea><div class="in-btns"><button class="sb2" onclick="showAttachMenu()">📎</button><button class="sb2" onclick="saveMsg()">💾</button><button class="sb2 pri" onclick="sendMsg()">📤</button></div></div>
 <div class="input-info"><span class="tok-lnk stat-lnk" onclick="showTokDet()">Tokens: <span id="tokCnt">0</span></span><span class="stat-lnk" id="matTokInfo" onclick="showMatPanel()">素材: 0</span><span class="ctx-lnk" id="ctxInfo" onclick="showCtxBoundary()"></span><span class="cost-lnk" id="costInfo" onclick="showCostPanel()">💰 --</span><span class="dk-hint" style="margin-left:auto">Shift+Enter保存 | Ctrl+Enter发送</span></div>
 </div></div>
 </div></div></div>
 <!-- 素材编辑器 -->
 <div class="mat-app" id="matApp"></div>
-<div class="version">v3.1.89</div>
+<div class="version">v3.1.87</div>
 <div class="mo" id="modal"><div class="mo-box" id="moBox"><div class="mo-hdr"><h3 id="moTitle"></h3><button class="mo-cls" onclick="moClose()">×</button></div><div class="mo-body" id="moBody"></div><div class="mo-ftr" id="moFtr"></div></div></div>
 <div class="ctx" id="ctxMenu"></div>
 <div class="ctx" id="convMenu"></div>
 <div class="ctx" id="grpMenu"></div>
 <script>
 // ==================== 公共区 ====================
-const VER='3.1.89',RSN_F=['reasoning_content','reasoning','thinking','thought','inner_monologue'];
+const VER='3.1.87',RSN_F=['reasoning_content','reasoning','thinking','thought','inner_monologue'];
 let _updateChecked=false;
 let materials={chars:{},charOrder:[],rels:{},relIndex:[],apps:{},appOrder:[],appGroups:{},groupOrder:[],metaPrompts:{},metaOrder:[],appKeywords:{},_sourceFile:'',_importedAt:'',_savedAt:''};
 let storyData={timelineYears:[],stories:[]},tlPointsChat=[];
@@ -2474,6 +2474,7 @@ return '\uE000'+id+'\uE001'
 });
 if(uiSettings.enableKatex&&window.katex){
 work=work.replace(/\$([^\$\n]{1,200}?)\$/g,function(m,tex){
+if(/^\d/.test(tex))return m;
 if(!tex.trim())return m;
 const id=slots.length;
 let html=null;
@@ -2482,63 +2483,18 @@ slots.push({html:html||('<span class="fallback-inline">'+esc(m)+'</span>')});
 return '\uE000'+id+'\uE001'
 })
 }
-work=work.replace(/(\n|^)([ \t]*\|[^\n]+\|[ \t]*\n[ \t]*\|[ \t]*:?-+:?[ \t]*(?:\|[ \t]*:?-+:?[ \t]*)*\|[ \t]*\n(?:[ \t]*\|[^\n]+\|[ \t]*(?:\n|$))+)/g,function(m,prefix,block){
-const lines=block.split('\n').filter(l=>l.trim());
-if(lines.length<3)return m;
-const parseCells=line=>{
-let s=line.trim();
-if(s.startsWith('|'))s=s.substring(1);
-if(s.endsWith('|'))s=s.substring(0,s.length-1);
-return s.split(/(?<!\\)\|/).map(c=>c.trim().replace(/\\\|/g,'|'));
-};
-const sepCells=parseCells(lines[1]);
-if(!sepCells.length||!sepCells.every(c=>/^:?-+:?$/.test(c)))return m;
-const headers=parseCells(lines[0]);
-if(headers.length!==sepCells.length)return m;
-const aligns=sepCells.map(c=>{
-const l=c.startsWith(':'),r=c.endsWith(':');
-if(l&&r)return 'center';
-if(r)return 'right';
-if(l)return 'left';
-return null;
-});
-const rows=[];
-for(let i=2;i<lines.length;i++){
-const cells=parseCells(lines[i]);
-while(cells.length<headers.length)cells.push('');
-if(cells.length>headers.length)cells.length=headers.length;
-rows.push(cells);
-}
-if(!rows.length)return m;
-const renderCell=txt=>{
-let r=esc(txt);
-r=r.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
-r=r.replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g,'<em>$1</em>');
-return r;
-};
-let html='<div class="md-table-wrap"><table class="md-table"><thead><tr>';
-headers.forEach((h,i)=>{
-const align=aligns[i]?` style="text-align:${aligns[i]}"`:'';
-html+=`<th${align}>${renderCell(h)}</th>`;
-});
-html+='</tr></thead><tbody>';
-rows.forEach(row=>{
-html+='<tr>';
-row.forEach((c,i)=>{
-const align=aligns[i]?` style="text-align:${aligns[i]}"`:'';
-html+=`<td${align}>${renderCell(c)}</td>`;
-});
-html+='</tr>';
-});
-html+='</tbody></table></div>';
-const id=slots.length;
-slots.push({html});
-return prefix+'\uE000'+id+'\uE001\n';
-});
 work=esc(work);
 work=work.replace(/^[ \t]*(\*{3,}|-{3,}|_{3,})[ \t]*$/gm,'<hr style="border:none;border-top:1px solid var(--bd);margin:8px 0">');
 work=work.replace(/^(#{1,6})\s+(.+)$/gm,function(m,h,t){
-const lv=h.length,sizes=['1.25em','1.15em','1.05em','1em','
+const lv=h.length,sizes=['1.25em','1.15em','1.05em','1em','0.95em','0.9em'];
+return '<div style="font-weight:700;font-size:'+sizes[lv-1]+';margin:2px 0 1px">'+t+'</div>'
+});
+work=work.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
+work=work.replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g,'<em>$1</em>');
+work=work.replace(/\n/g,'<br>');
+work=work.replace(/\uE000(\d+)\uE001/g,function(m,id){return slots[parseInt(id)].html});
+return work
+}
 
 //== copyPre ==//
 function copyPre(btn){const code=btn.parentElement.querySelector('code');if(code){const txt=code.textContent||'';copyText(txt).then(()=>{const ic=btn.querySelector('.cp-icon'),tx=btn.querySelector('.cp-text');if(ic)ic.textContent='✓';if(tx)tx.textContent='✓';setTimeout(()=>{if(ic)ic.textContent='📋';if(tx)tx.textContent='复制'},1500)})}}
