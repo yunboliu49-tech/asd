@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
-<title>创作对话工具 v3.1.87</title>
+<title>创作对话工具 v3.1.92</title>
 <style>
 
 :root{--bg-p:#151513;--bg-s:#1d1d1a;--bg-t:#282824;--tx-p:#e8e3d8;--tx-s:#b6afa2;--tx-m:#777065;--bd:#37362f;--ac:#78bfa6;--ach:#66ad95;--ac-soft:rgba(120,191,166,.14);--ok:#79c58e;--ok-soft:rgba(121,197,142,.16);--wn:#d6a85f;--wn-soft:rgba(214,168,95,.16);--dn:#d9827b;--dn-soft:rgba(217,130,123,.16);--purple:#b68ac8;--purple-soft:rgba(182,138,200,.14);--pink:#d887a8;--pink-soft:rgba(216,135,168,.16);--gold:#d6a85f;--gold-soft:rgba(214,168,95,.16);--indigo:#8d9cc8;--indigo-soft:rgba(141,156,200,.14);--orange:#d69363;--orange-soft:rgba(214,147,99,.16);--code-bg:rgba(0,0,0,.22);--mark-bg:rgba(214,168,95,.32);--ubg:#243a34;--abg:transparent;--ts:16px;--bs:14px;--fs:15px;--safe-t:env(safe-area-inset-top);--safe-b:env(safe-area-inset-bottom);--sw:260px;--r:4px;--mat-accent:#78bfa6}
@@ -771,20 +771,20 @@ html,body{overflow-x:hidden;max-width:100vw}
 </div>
 <div class="input-area"><div class="input-wrap">
 <div class="stop-bar" id="stopBar"><div class="stop-hdr" onclick="tglStopDet()" style="cursor:pointer"><span class="t-cnt" id="taskCnt">生成中 0</span><button class="stop-all" id="stopAllBtn" onclick="sp();stopLast()">⏹停止</button></div><div class="stop-det" id="stopDet"></div></div>
-<div id="attachBar" style="display:none"></div><div class="input-box"><button class="mob-send" id="mobSend"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></button><button class="mob-attach" id="mobAttach" onclick="showAttachMenu()">📎</button><textarea id="userIn" placeholder="输入消息..." rows="1" onkeydown="handleKey(event)" oninput="autoRsz(this);updateTokCnt()"></textarea><div class="in-btns"><button class="sb2" onclick="showAttachMenu()">📎</button><button class="sb2" onclick="saveMsg()">💾</button><button class="sb2 pri" onclick="sendMsg()">📤</button></div></div>
+<div id="attachBar" style="display:none"></div><div class="input-box"><textarea id="userIn" placeholder="输入消息..." rows="1" onkeydown="handleKey(event)" oninput="autoRsz(this);updateTokCnt()"></textarea><button class="mob-attach" id="mobAttach" onclick="showAttachMenu()">📎</button><button class="mob-send" id="mobSend"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></button><div class="in-btns"><button class="sb2" onclick="showAttachMenu()">📎</button><button class="sb2" onclick="saveMsg()">💾</button><button class="sb2 pri" onclick="sendMsg()">📤</button></div></div>
 <div class="input-info"><span class="tok-lnk stat-lnk" onclick="showTokDet()">Tokens: <span id="tokCnt">0</span></span><span class="stat-lnk" id="matTokInfo" onclick="showMatPanel()">素材: 0</span><span class="ctx-lnk" id="ctxInfo" onclick="showCtxBoundary()"></span><span class="cost-lnk" id="costInfo" onclick="showCostPanel()">💰 --</span><span class="dk-hint" style="margin-left:auto">Shift+Enter保存 | Ctrl+Enter发送</span></div>
 </div></div>
 </div></div></div>
 <!-- 素材编辑器 -->
 <div class="mat-app" id="matApp"></div>
-<div class="version">v3.1.87</div>
+<div class="version">v3.1.92</div>
 <div class="mo" id="modal"><div class="mo-box" id="moBox"><div class="mo-hdr"><h3 id="moTitle"></h3><button class="mo-cls" onclick="moClose()">×</button></div><div class="mo-body" id="moBody"></div><div class="mo-ftr" id="moFtr"></div></div></div>
 <div class="ctx" id="ctxMenu"></div>
 <div class="ctx" id="convMenu"></div>
 <div class="ctx" id="grpMenu"></div>
 <script>
 // ==================== 公共区 ====================
-const VER='3.1.87',RSN_F=['reasoning_content','reasoning','thinking','thought','inner_monologue'];
+const VER='3.1.92',RSN_F=['reasoning_content','reasoning','thinking','thought','inner_monologue'];
 let _updateChecked=false;
 let materials={chars:{},charOrder:[],rels:{},relIndex:[],apps:{},appOrder:[],appGroups:{},groupOrder:[],metaPrompts:{},metaOrder:[],appKeywords:{},_sourceFile:'',_importedAt:'',_savedAt:''};
 let storyData={timelineYears:[],stories:[]},tlPointsChat=[];
@@ -2474,8 +2474,8 @@ return '\uE000'+id+'\uE001'
 });
 if(uiSettings.enableKatex&&window.katex){
 work=work.replace(/\$([^\$\n]{1,200}?)\$/g,function(m,tex){
-if(/^\d/.test(tex))return m;
 if(!tex.trim())return m;
+if(/^\d[\d.,]*$/.test(tex))return m;
 const id=slots.length;
 let html=null;
 try{html=katex.renderToString(tex,{displayMode:false,throwOnError:true,output:'html',strict:'ignore'})}catch(e){}
@@ -2483,6 +2483,64 @@ slots.push({html:html||('<span class="fallback-inline">'+esc(m)+'</span>')});
 return '\uE000'+id+'\uE001'
 })
 }
+work=work.replace(/(\n|^)([ \t]*\|[^\n]+\|[ \t]*\n[ \t]*\|[ \t]*:?-+:?[ \t]*(?:\|[ \t]*:?-+:?[ \t]*)*\|[ \t]*\n(?:[ \t]*\|[^\n]+\|[ \t]*(?:\n|$))+)/g,function(m,prefix,block){
+const lines=block.split('\n').filter(l=>l.trim());
+if(lines.length<3)return m;
+const parseCells=line=>{
+let s=line.trim();
+if(s.startsWith('|'))s=s.substring(1);
+if(s.endsWith('|'))s=s.substring(0,s.length-1);
+return s.split(/(?<!\\)\|/).map(c=>c.trim().replace(/\\\|/g,'|'));
+};
+const sepCells=parseCells(lines[1]);
+if(!sepCells.length||!sepCells.every(c=>/^:?-+:?$/.test(c)))return m;
+const headers=parseCells(lines[0]);
+if(headers.length!==sepCells.length)return m;
+const aligns=sepCells.map(c=>{
+const l=c.startsWith(':'),r=c.endsWith(':');
+if(l&&r)return 'center';
+if(r)return 'right';
+if(l)return 'left';
+return null;
+});
+const rows=[];
+for(let i=2;i<lines.length;i++){
+const cells=parseCells(lines[i]);
+while(cells.length<headers.length)cells.push('');
+if(cells.length>headers.length)cells.length=headers.length;
+rows.push(cells);
+}
+if(!rows.length)return m;
+const renderCell=txt=>{
+const parts=txt.split(/(\uE000\d+\uE001)/g);
+return parts.map(p=>{
+const mt=p.match(/^\uE000(\d+)\uE001$/);
+if(mt)return slots[parseInt(mt[1])]?.html||'';
+let r=esc(p);
+r=r.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
+r=r.replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g,'<em>$1</em>');
+return r;
+}).join('');
+};
+let html='<div style="overflow-x:auto;margin:6px 0;-webkit-overflow-scrolling:touch"><table style="border-collapse:collapse;font-size:13px"><thead><tr>';
+headers.forEach((h,i)=>{
+const align=aligns[i]?' style="border:1px solid var(--bd);padding:6px 10px;font-weight:600;background:var(--bg-t);text-align:'+aligns[i]+'"':' style="border:1px solid var(--bd);padding:6px 10px;font-weight:600;background:var(--bg-t)"';
+html+='<th'+align+'>'+renderCell(h)+'</th>';
+});
+html+='</tr></thead><tbody>';
+rows.forEach((row,ri)=>{
+html+='<tr'+(ri%2?' style="background:rgba(128,128,128,.06)"':'')+'>';
+row.forEach((c,ci)=>{
+const align=aligns[ci]?' style="border:1px solid var(--bd);padding:6px 10px;text-align:'+aligns[ci]+'"':' style="border:1px solid var(--bd);padding:6px 10px"';
+html+='<td'+align+'>'+renderCell(c)+'</td>';
+});
+html+='</tr>';
+});
+html+='</tbody></table></div>';
+const id=slots.length;
+slots.push({html});
+return prefix+'\uE000'+id+'\uE001\n';
+});
 work=esc(work);
 work=work.replace(/^[ \t]*(\*{3,}|-{3,}|_{3,})[ \t]*$/gm,'<hr style="border:none;border-top:1px solid var(--bd);margin:8px 0">');
 work=work.replace(/^(#{1,6})\s+(.+)$/gm,function(m,h,t){
@@ -2543,7 +2601,7 @@ return out
 }
 
 //== renderStreamContent ==//
-function renderStreamContent(bodyEl,rawContent,parseContentTags,msgId){if(!rawContent){bodyEl.style.whiteSpace='';bodyEl.innerHTML='<span class="typing-i"><span></span><span></span><span></span></span>';return}if(parseContentTags!==false){const tags=params.contentTags||['think','thinking'];const hasTag=tags.some(tag=>rawContent.indexOf('<'+tag+'>')!==-1);if(hasTag){bodyEl.style.whiteSpace='';bodyEl.innerHTML=renderMd(rawContent,true,msgId);return}}bodyEl.style.whiteSpace='pre-wrap';bodyEl.textContent=rawContent}
+function renderStreamContent(bodyEl,rawContent,parseContentTags,msgId){if(!rawContent){bodyEl.style.whiteSpace='';bodyEl.innerHTML='<span class="typing-i"><span></span><span></span><span></span></span>';return}bodyEl.style.whiteSpace='';bodyEl.innerHTML=renderMd(rawContent,parseContentTags,msgId)}
 
 //== buildMsgHtml ==//
 function buildMsgHtml(msg,i,genIds,ep){
@@ -3372,6 +3430,7 @@ h+='<button class="mo-btn sec" onclick="hideMo();pickImageFromCamera()" style="p
 h+='<button class="mo-btn sec" onclick="hideMo();pickImageFile()" style="padding:14px;text-align:left">🖼️ 从相册选图片（可多选）</button>';
 h+='<button class="mo-btn sec" onclick="hideMo();pickFile()" style="padding:14px;text-align:left">📄 上传文件（文本类）</button>';
 h+='<button class="mo-btn sec" onclick="hideMo();addManualAttachment()" style="padding:14px;text-align:left">✏️ 手动输入文本附件</button>';
+h+='<button class="mo-btn sec" onclick="hideMo();addQuoteAttachment()" style="padding:14px;text-align:left">📋 粘贴为引用</button>';
 if(hasAtt)h+=`<div style="border-top:1px solid var(--bd);padding-top:8px;margin-top:4px;font-size:12px;color:var(--tx-m)">当前 ${inputAttachments.length} 个附件</div>`;
 h+='</div>';
 showMoCompact('📎 添加附件',h,`<button class="mo-btn sec" onclick="hideMo()">取消</button>`)
@@ -3389,6 +3448,20 @@ const ct=document.getElementById('attCt').value;
 if(!ct.trim()){toast('请输入内容');return}
 const nm=document.getElementById('attNm').value.trim()||undefined;
 addAttachment(ct,nm);hideMo();ok()}
+
+//== addQuoteAttachment ==//
+function addQuoteAttachment(){
+showMo('📋 粘贴为引用',
+`<div class="fg"><label>名称</label><input type="text" id="attNm" value="引用内容" placeholder="引用名称"></div><div class="fg"><label>引用内容</label><textarea id="attCt" rows="8" style="max-height:60vh" placeholder="粘贴要引用的内容..."></textarea></div>`,
+`<button class="mo-btn sec" onclick="hideMo()">取消</button><button class="mo-btn pri" onclick="doAddQuoteAttach()">添加</button>`)}
+
+//== doAddQuoteAttach ==//
+function doAddQuoteAttach(){
+const ct=document.getElementById('attCt').value;
+if(!ct.trim()){toast('请输入引用内容');return}
+const nm=document.getElementById('attNm').value.trim()||'引用内容';
+const wrapped='【以下为引用内容】\n'+ct+'\n【引用结束】';
+addAttachment(wrapped,nm);hideMo();ok()}
 
 //== showApiDD ==//
 function showApiDD(){hideMdlDD();const dd=document.getElementById('apiDD');if(dd.classList.contains('show')){hideApiDD();return}dd.innerHTML=apiConfigs.map(c=>`<div class="csel-dd-item ${c.id===curApiId?'active':''}" onclick="pickApi('${c.id}')"><span class="cdd-nm">${esc(c.name)}</span><span class="cdd-cnt">(${c.models.length})</span></div>`).join('')||'<div style="padding:12px;text-align:center;color:var(--tx-m);font-size:12px">无API</div>';dd.classList.add('show');if(isMobile){const r=document.getElementById('apiSelBtn').getBoundingClientRect();dd.style.top=(r.bottom+2)+'px';dd.style.maxHeight=Math.min(280,window.innerHeight-r.bottom-20)+'px'}else{requestAnimationFrame(()=>{const r=dd.getBoundingClientRect();if(r.right>window.innerWidth-4){dd.style.left='auto';dd.style.right='0'}})}}
@@ -3667,7 +3740,7 @@ if(result){fg.summary=result;conv.updatedAt=new Date().toISOString();await saveC
 function updAuxMdlOpts(){const aid=document.getElementById('sAuxApi')?.value;const sel=document.getElementById('sAuxMdl');if(!sel)return;const cfg=apiConfigs.find(c=>c.id===aid);sel.innerHTML=cfg?cfg.models.map(m=>`<option value="${escA(m)}">${esc(m)}</option>`).join(''):'<option value="">--</option>'}
 
 //== scheduleStreamUpdate ==//
-function scheduleStreamUpdate(cid,req){streamDirty=true;if(streamRAF)return;streamRAF=requestAnimationFrame(()=>{streamRAF=null;if(!streamDirty)return;if(cid!==curConvId||!curConv){streamDirty=false;return}const mi=curConv.messages.findIndex(m=>m.id===req.msgId);if(mi===-1){streamDirty=false;return}curConv.messages[mi].content=req.content;if(req.reasoning){curConv.messages[mi].reasoning=req.reasoning;curConv.messages[mi].reasoningDuration=req.reasoningStart?((req.reasoningEnd||Date.now())-req.reasoningStart):0}if(req.firstTokenTime)curConv.messages[mi].firstTokenMs=req.firstTokenTime-req.startTime;if(foldMgr.isFolded(req.msgId)){streamDirty=false;const gfi=document.getElementById('gfi-'+req.msgId);if(gfi){const s=gfi.querySelector('strong');if(s)s.textContent=req.charCount.toLocaleString()}return}const el=document.getElementById('msg-'+mi);if(el){const sel=window.getSelection();let hasRealSel=false;if(sel&&sel.rangeCount>0&&!sel.isCollapsed){try{hasRealSel=el.contains(sel.anchorNode)||el.contains(sel.focusNode)}catch(e){}}if(hasRealSel){if(_streamRetryTimer)clearTimeout(_streamRetryTimer);_streamRetryTimer=setTimeout(()=>{_streamRetryTimer=null;if(req.status==='generating')scheduleStreamUpdate(cid,req)},200);return}streamDirty=false;const b=el.querySelector('.msg-body');const ep=getEffectiveParams(curConv);if(b)renderStreamContent(b,req.content,ep.parseContentTags,req.msgId);const fb=el.querySelector('.fold-btn');if(req.charCount>0){if(!fb){const nfb=document.createElement('button');nfb.className='fold-btn';nfb.textContent='▲ 折叠';nfb.onclick=()=>toggleGenFold(mi);const mbody=el.querySelector('.msg-body');if(mbody)mbody.after(nfb)}else fb.textContent='▲ 折叠'}const cc=el.querySelector('.msg-chars');if(cc)cc.textContent=req.charCount.toLocaleString()+'字';const rsnBlock=el.querySelector('[data-rsn=field]');if(rsnBlock){const rc=rsnBlock.querySelector('.rsn-ct');if(rc&&req.reasoning)rc.textContent=req.reasoning}if(req.reasoning&&!el.querySelector('[data-rsn=field]')){const rsnId=req.msgId+'_r';const rsnEl=document.createElement('div');rsnEl.className='rsn-block';rsnEl.setAttribute('data-rsn','field');rsnEl.innerHTML=`<div class="rsn-hdr" onclick="tglRsn('${rsnId}')"><span class="arr" id="ra-${rsnId}">▶</span><span>🧠</span></div><div class="rsn-ct" id="rc-${rsnId}">${esc(req.reasoning)}</div>`;const msgBody=el.querySelector('.msg-body');if(msgBody)msgBody.parentNode.insertBefore(rsnEl,msgBody)}}else streamDirty=false;if(autoScrollOn)scrBot()})}
+function scheduleStreamUpdate(cid,req){streamDirty=true;if(streamRAF)return;streamRAF=requestAnimationFrame(()=>{streamRAF=null;if(!streamDirty)return;if(cid!==curConvId||!curConv){streamDirty=false;return}const mi=curConv.messages.findIndex(m=>m.id===req.msgId);if(mi===-1){streamDirty=false;return}curConv.messages[mi].content=req.content;if(req.reasoning){curConv.messages[mi].reasoning=req.reasoning;curConv.messages[mi].reasoningDuration=req.reasoningStart?((req.reasoningEnd||Date.now())-req.reasoningStart):0}if(req.firstTokenTime)curConv.messages[mi].firstTokenMs=req.firstTokenTime-req.startTime;if(foldMgr.isFolded(req.msgId)){streamDirty=false;const gfi=document.getElementById('gfi-'+req.msgId);if(gfi){const s=gfi.querySelector('strong');if(s)s.textContent=req.charCount.toLocaleString()}return}const el=document.getElementById('msg-'+mi);if(el){const sel=window.getSelection();let hasRealSel=false;if(sel&&sel.rangeCount>0&&!sel.isCollapsed){try{hasRealSel=el.contains(sel.anchorNode)||el.contains(sel.focusNode)}catch(e){}}if(hasRealSel){if(_streamRetryTimer)clearTimeout(_streamRetryTimer);_streamRetryTimer=setTimeout(()=>{_streamRetryTimer=null;if(req.status==='generating')scheduleStreamUpdate(cid,req)},200);return}streamDirty=false;const b=el.querySelector('.msg-body');if(b){const _nt=Date.now();if(!req._lastRenderT||_nt-req._lastRenderT>=500){const ep=getEffectiveParams(curConv);renderStreamContent(b,req.content,ep.parseContentTags,req.msgId);req._lastRenderT=_nt}}const fb=el.querySelector('.fold-btn');if(req.charCount>0){if(!fb){const nfb=document.createElement('button');nfb.className='fold-btn';nfb.textContent='▲ 折叠';nfb.onclick=()=>toggleGenFold(mi);const mbody=el.querySelector('.msg-body');if(mbody)mbody.after(nfb)}else fb.textContent='▲ 折叠'}const cc=el.querySelector('.msg-chars');if(cc)cc.textContent=req.charCount.toLocaleString()+'字';const rsnBlock=el.querySelector('[data-rsn=field]');if(rsnBlock){const rc=rsnBlock.querySelector('.rsn-ct');if(rc&&req.reasoning)rc.textContent=req.reasoning}if(req.reasoning&&!el.querySelector('[data-rsn=field]')){const rsnId=req.msgId+'_r';const rsnEl=document.createElement('div');rsnEl.className='rsn-block';rsnEl.setAttribute('data-rsn','field');rsnEl.innerHTML=`<div class="rsn-hdr" onclick="tglRsn('${rsnId}')"><span class="arr" id="ra-${rsnId}">▶</span><span>🧠</span></div><div class="rsn-ct" id="rc-${rsnId}">${esc(req.reasoning)}</div>`;const msgBody=el.querySelector('.msg-body');if(msgBody)msgBody.parentNode.insertBefore(rsnEl,msgBody)}}else streamDirty=false;if(autoScrollOn)scrBot()})}
 
 //== updateMC ==//
 async function updateMC(cid,mid,ct,rsn,dur,ftMs,usage){const conv=cid===curConvId&&curConv?curConv:await loadConvFull(cid);if(!conv)return;const msg=conv.messages.find(m=>m.id===mid);if(msg){msg.content=ct;if(rsn){msg.reasoning=rsn;msg.reasoningDuration=dur}if(ftMs)msg.firstTokenMs=ftMs;if(usage){msg.promptTokens=usage.prompt_tokens||0;msg.completionTokens=usage.completion_tokens||0;msg.cacheHitTokens=usage.prompt_cache_hit_tokens||0;msg.cacheMissTokens=usage.prompt_cache_miss_tokens||0}conv.updatedAt=new Date().toISOString();await saveConvF(conv)}if(cid===curConvId&&curConv){const m=curConv.messages.find(m=>m.id===mid);if(m){m.content=ct;if(rsn){m.reasoning=rsn;m.reasoningDuration=dur}if(ftMs)m.firstTokenMs=ftMs;if(usage){m.promptTokens=usage.prompt_tokens||0;m.completionTokens=usage.completion_tokens||0;m.cacheHitTokens=usage.prompt_cache_hit_tokens||0;m.cacheMissTokens=usage.prompt_cache_miss_tokens||0}}}}
