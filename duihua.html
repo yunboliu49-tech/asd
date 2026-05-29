@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
-<title>创作对话工具 v3.1.92</title>
+<title>创作对话工具 v3.1.94</title>
 <style>
 
 :root{--bg-p:#151513;--bg-s:#1d1d1a;--bg-t:#282824;--tx-p:#e8e3d8;--tx-s:#b6afa2;--tx-m:#777065;--bd:#37362f;--ac:#78bfa6;--ach:#66ad95;--ac-soft:rgba(120,191,166,.14);--ok:#79c58e;--ok-soft:rgba(121,197,142,.16);--wn:#d6a85f;--wn-soft:rgba(214,168,95,.16);--dn:#d9827b;--dn-soft:rgba(217,130,123,.16);--purple:#b68ac8;--purple-soft:rgba(182,138,200,.14);--pink:#d887a8;--pink-soft:rgba(216,135,168,.16);--gold:#d6a85f;--gold-soft:rgba(214,168,95,.16);--indigo:#8d9cc8;--indigo-soft:rgba(141,156,200,.14);--orange:#d69363;--orange-soft:rgba(214,147,99,.16);--code-bg:rgba(0,0,0,.22);--mark-bg:rgba(214,168,95,.32);--ubg:#243a34;--abg:transparent;--ts:16px;--bs:14px;--fs:15px;--safe-t:env(safe-area-inset-top);--safe-b:env(safe-area-inset-bottom);--sw:260px;--r:4px;--mat-accent:#78bfa6}
@@ -777,14 +777,14 @@ html,body{overflow-x:hidden;max-width:100vw}
 </div></div></div>
 <!-- 素材编辑器 -->
 <div class="mat-app" id="matApp"></div>
-<div class="version">v3.1.92</div>
+<div class="version">v3.1.94</div>
 <div class="mo" id="modal"><div class="mo-box" id="moBox"><div class="mo-hdr"><h3 id="moTitle"></h3><button class="mo-cls" onclick="moClose()">×</button></div><div class="mo-body" id="moBody"></div><div class="mo-ftr" id="moFtr"></div></div></div>
 <div class="ctx" id="ctxMenu"></div>
 <div class="ctx" id="convMenu"></div>
 <div class="ctx" id="grpMenu"></div>
 <script>
 // ==================== 公共区 ====================
-const VER='3.1.92',RSN_F=['reasoning_content','reasoning','thinking','thought','inner_monologue'];
+const VER='3.1.94',RSN_F=['reasoning_content','reasoning','thinking','thought','inner_monologue'];
 let _updateChecked=false;
 let materials={chars:{},charOrder:[],rels:{},relIndex:[],apps:{},appOrder:[],appGroups:{},groupOrder:[],metaPrompts:{},metaOrder:[],appKeywords:{},_sourceFile:'',_importedAt:'',_savedAt:''};
 let storyData={timelineYears:[],stories:[]},tlPointsChat=[];
@@ -3169,21 +3169,22 @@ addAttachment(text);
 toast('📎 已转为附件 ('+text.length.toLocaleString()+'字)')}
 
 //== addImageAttachment ==//
-function addImageAttachment(file){
+function addImageAttachment(file,slotId){
 if(!file||!file.type.startsWith('image/'))return;
+const removeSlot=()=>{if(slotId){const i=inputAttachments.findIndex(a=>a.id===slotId&&a.loading);if(i>=0)inputAttachments.splice(i,1);renderAttachBar();updateTokCnt()}};
 const reader=new FileReader();
-reader.onerror=function(){toast('❌ 读取图片失败')};
+reader.onerror=function(){toast('❌ 读取图片失败');removeSlot()};
 reader.onload=async function(){
 const dataUrl=reader.result;
-if(!dataUrl||typeof dataUrl!=='string'){toast('❌ 读取图片失败');return}
+if(!dataUrl||typeof dataUrl!=='string'){toast('❌ 读取图片失败');removeSlot();return}
 const img=new Image();
 try{
 img.src=dataUrl;
 if(img.decode){await img.decode()}
 else{await new Promise((res,rej)=>{img.onload=res;img.onerror=()=>rej(new Error('decode failed'));setTimeout(()=>{if(!img.complete)rej(new Error('decode timeout'))},10000)})}
-}catch(e){toast('❌ 图片解码失败，可能是不支持的格式');return}
+}catch(e){toast('❌ 图片解码失败，可能是不支持的格式');removeSlot();return}
 const ow=img.naturalWidth||img.width,oh=img.naturalHeight||img.height;
-if(!ow||!oh){toast('❌ 图片尺寸异常');return}
+if(!ow||!oh){toast('❌ 图片尺寸异常');removeSlot();return}
 const MAX_SIDE=2576;
 const MAX_MP=3750000;
 const JPEG_Q=0.92;
@@ -3232,9 +3233,9 @@ needResize=false
 }}
 const commaIdx=outUrl.indexOf(',');
 const base64=commaIdx>=0?outUrl.substring(commaIdx+1):'';
-if(!base64){toast('❌ 图片处理失败');return}
-inputAttachments.push({
-id:gid2(),
+if(!base64){toast('❌ 图片处理失败');removeSlot();return}
+const finalItem={
+id:slotId||gid2(),
 type:'image',
 base64,
 mimeType:outMime,
@@ -3243,12 +3244,19 @@ width:w,
 height:h,
 name:file.name||'image',
 size:Math.round(base64.length*3/4)
-});
+};
+if(slotId){
+const idx=inputAttachments.findIndex(a=>a.id===slotId);
+if(idx>=0)inputAttachments[idx]=finalItem;
+else inputAttachments.push(finalItem)
+}else{
+inputAttachments.push(finalItem)
+}
 renderAttachBar();
 updateTokCnt();
 toast('📷 已添加图片'+(needResize?' (已压缩)':''))
 };
-try{reader.readAsDataURL(file)}catch(e){toast('❌ 读取图片失败: '+e.name)}}
+try{reader.readAsDataURL(file)}catch(e){toast('❌ 读取图片失败: '+e.name);removeSlot()}}
 
 //== addImageFromDrop ==//
 function addImageFromDrop(e){
@@ -3264,9 +3272,14 @@ function pickImageFile(){
 const inp=document.createElement('input');
 inp.type='file';inp.accept='image/*';inp.multiple=true;
 inp.onchange=e=>{
-for(const f of e.target.files){
-if(f.type.startsWith('image/'))addImageAttachment(f)
-}};
+const files=[...e.target.files].filter(f=>f.type.startsWith('image/'));
+files.forEach(f=>{
+const slotId=gid2();
+inputAttachments.push({id:slotId,type:'image',loading:true,name:f.name||'image',dataUrl:'',base64:'',mimeType:f.type||'image/png',width:0,height:0,size:f.size||0});
+addImageAttachment(f,slotId)
+});
+if(files.length)renderAttachBar()
+};
 inp.click()}
 
 //== pickImageFromCamera ==//
@@ -3406,6 +3419,9 @@ bar.style.display='block';
 if(mobBtn)mobBtn.classList.add('has');
 bar.innerHTML=inputAttachments.map((a,i)=>{
 if(a.type==='image'){
+if(a.loading){
+return`<div class="attach-item" style="opacity:.7"><span class="attach-icon">⏳</span><span class="attach-name" title="${escA(a.name)}">${esc(a.name)}</span><span class="attach-len">加载中...</span><button class="attach-act" onclick="removeAttachment(${i})" title="取消">✕</button></div>`
+}
 return`<div class="attach-item"><img class="attach-img-thumb" src="${a.dataUrl}" onclick="pvImgAttach(${i})"><span class="attach-name" title="${escA(a.name)}">${esc(a.name)}</span><span class="attach-len">${a.width}×${a.height} | ${fmtImgSize(a.base64.length)}</span><button class="attach-act" onclick="pvImgAttach(${i})" title="预览">👁</button><button class="attach-act" onclick="removeAttachment(${i})" title="删除">✕</button></div>`
 }
 const len=a.content.length;
@@ -3517,7 +3533,7 @@ btn.style.color=on?'var(--ok)':'var(--tx-m)';
 btn.title=on?'思考标签解析：开启':'思考标签解析：关闭'}
 
 //== saveMsg ==//
-async function saveMsg(){if(isWriteBlocked('保存消息'))return;const inp=document.getElementById('userIn');const c=inp.value.trim();const attachments=[...inputAttachments];const hasAttach=attachments.length>0;if((!c&&!hasAttach)||!curConv)return;const startIdx=curConv.messages.length;
+async function saveMsg(){if(isWriteBlocked('保存消息'))return;const inp=document.getElementById('userIn');const c=inp.value.trim();const attachments=[...inputAttachments];const hasAttach=attachments.length>0;if((!c&&!hasAttach)||!curConv)return;if(attachments.some(a=>a.loading)){toast('⏳ 图片加载中，请稍候');return}const startIdx=curConv.messages.length;
 attachments.forEach(a=>{
 if(a.type==='image'){
 curConv.messages.push({id:gid2(),role:'user',content:'[图片: '+a.name+']',images:[{base64:a.base64,mimeType:a.mimeType,width:a.width,height:a.height,name:a.name}],timestamp:new Date().toISOString()})
@@ -3528,7 +3544,7 @@ if(c)curConv.messages.push({id:gid2(),role:'user',content:c,timestamp:new Date()
 inp.value='';inp.style.height='auto';delete convDrafts[curConvId];inputAttachments=[];renderAttachBar();appendMsgs(startIdx);scrBot();updateTokCnt();await saveConvF(curConv);renderConvList();toast('✓ 已保存')}
 
 //== sendMsg ==//
-async function sendMsg(){if(isWriteBlocked('发送消息'))return;const inp=document.getElementById('userIn');const c=inp.value.trim();const attachments=[...inputAttachments];const hasAttach=attachments.length>0;if((!c&&!hasAttach)||!curConv)return;const{apiId:_aid,model:_mdl}=getActiveModel(curConv);if(!_aid||!_mdl){toast('请选择API和模型');return}const _ep2=getEffectiveParams(curConv);const _pi2=new Set((pendReqs[curConvId]||[]).filter(r=>r.status==='generating').map(r=>r.msgId));const _fin2=attachments.filter(a=>a.type!=='image').map(a=>a.content).join('\n')+(c?'\n'+c:'');const _pk2=calcApiPack(curConv,curConv.messages,_ep2,{includeInput:true,inputText:_fin2,excludeIds:_pi2});if(!checkCostBeforeSend(_aid,_mdl,_pk2.totalTok))return;const startIdx=curConv.messages.length;
+async function sendMsg(){if(isWriteBlocked('发送消息'))return;const inp=document.getElementById('userIn');const c=inp.value.trim();const attachments=[...inputAttachments];const hasAttach=attachments.length>0;if((!c&&!hasAttach)||!curConv)return;if(attachments.some(a=>a.loading)){toast('⏳ 图片加载中，请稍候');return}const{apiId:_aid,model:_mdl}=getActiveModel(curConv);if(!_aid||!_mdl){toast('请选择API和模型');return}const _ep2=getEffectiveParams(curConv);const _pi2=new Set((pendReqs[curConvId]||[]).filter(r=>r.status==='generating').map(r=>r.msgId));const _fin2=attachments.filter(a=>a.type!=='image').map(a=>a.content).join('\n')+(c?'\n'+c:'');const _pk2=calcApiPack(curConv,curConv.messages,_ep2,{includeInput:true,inputText:_fin2,excludeIds:_pi2});if(!checkCostBeforeSend(_aid,_mdl,_pk2.totalTok))return;const startIdx=curConv.messages.length;
 attachments.forEach(a=>{
 if(a.type==='image'){
 curConv.messages.push({id:gid2(),role:'user',content:'[图片: '+a.name+']',images:[{base64:a.base64,mimeType:a.mimeType,width:a.width,height:a.height,name:a.name}],timestamp:new Date().toISOString()})
@@ -3780,7 +3796,7 @@ function pickStar(aid,m){curApiId=aid;curModel=m;if(curConv?.lockedModel){curCon
 
 
 //== showApiPanel ==//
-function showApiPanel(){let h=`<div class="api-panel-top"><div class="api-panel-actions"><button class="mo-btn pri" onclick="addApi()">+ 添加</button><button class="bbn" onclick="apiRefreshAll()">🔄刷新全部</button><button class="bbn" id="apiBatchBtn" onclick="toggleApiBatch()" style="${apiBatchMode?'background:var(--ac);color:#fff':''}">☑批量</button><button class="bbn" onclick="apiCollapseAll()">📁折叠</button><button class="bbn red" onclick="apiClearAll()">🗑️清空</button></div>`;h+=`<div class="api-panel-batch" id="apiBatchBar" style="display:${apiBatchMode?'block':'none'}"><div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap"><button class="bbn" onclick="apiBatchAll()">全选</button><button class="bbn" onclick="apiBatchNone()">取消</button><span style="font-size:11px;color:var(--tx-m)" id="apiBatchInfo">已选${apiBatchSel.size}</span><button class="bbn red" onclick="doApiBatchDel()">🗑️删除选中</button></div></div></div>`;if(!apiConfigs.length)h+='<div style="color:var(--tx-m);text-align:center;padding:16px">无API</div>';else h+=apiConfigs.map(cfg=>`<div class="api-it ${cfg.id===curApiId?'active':''}"><div class="api-ih" onclick="tglApiExp('${cfg.id}')"><span class="arr ${expandedApis[cfg.id]?'open':''}">▶</span>${apiBatchMode?`<input type="checkbox" ${apiBatchSel.has(cfg.id)?'checked':''} onclick="sp();tglApiBatchItem('${cfg.id}')" style="width:16px;height:16px;accent-color:var(--ac)">`:''}<span class="nm">${esc(cfg.name)}</span><span class="cnt">(${cfg.models.length})</span><div class="btns" onclick="sp()"><button onclick="editApi('${cfg.id}')">✏️</button><button onclick="delApi('${cfg.id}')">🗑️</button></div></div><div class="api-ib ${expandedApis[cfg.id]?'show':''}">${cfg.models.map(m=>{const act=cfg.id===curApiId&&m===curModel;const isStar=starredModels.find(s=>s.apiId===cfg.id&&s.model===m);const tr=modelTestR[cfg.id+'::'+m];return`<div class="mdl-row"><span class="m-nm ${act?'active':''}" onclick="pickApiMdl('${cfg.id}','${escA(m)}')">${esc(m)}</span>${tr?`<span class="tst ${tr.status}">${tr.status==='ok'?'✅':'❌'}${tr.label}</span>`:''}<button class="${isStar?'starred':''}" onclick="tglStarP('${cfg.id}','${escA(m)}')">${isStar?'⭐':'☆'}</button><button onclick="testMdl('${cfg.id}','${escA(m)}')">🧪</button><button onclick="delMdl('${cfg.id}','${escA(m)}')">✕</button></div>`}).join('')}<div style="display:flex;gap:4px;margin-top:6px"><input type="text" id="nm-${cfg.id}" placeholder="添加模型..." style="flex:1;padding:4px 6px;background:var(--bg-t);border:1px solid var(--bd);border-radius:var(--r);color:var(--tx-p);font-size:12px"><button class="bbn" onclick="addMdlTo('${cfg.id}')">+</button><button class="bbn" onclick="fetchMdls('${cfg.id}','add')">+🔍</button><button class="bbn" onclick="fetchMdls('${cfg.id}','replace')">↻🔍</button></div></div></div>`).join('');showMoFull('🔌 API配置',h,`<button class="mo-btn sec" onclick="hideMo()">关闭</button>`)}
+function showApiPanel(){let h=`<div class="api-panel-top"><div class="api-panel-actions"><button class="bbn" style="background:var(--ac);color:#fff;border-color:var(--ac)" onclick="addApi()">+ 添加</button><button class="bbn" onclick="apiRefreshAll()">🔄刷新全部</button><button class="bbn" id="apiBatchBtn" onclick="toggleApiBatch()" style="${apiBatchMode?'background:var(--ac);color:#fff':''}">☑批量</button><button class="bbn" onclick="apiCollapseAll()">📁折叠</button><button class="bbn red" onclick="apiClearAll()">🗑️清空</button></div>`;h+=`<div class="api-panel-batch" id="apiBatchBar" style="display:${apiBatchMode?'block':'none'}"><div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap"><button class="bbn" onclick="apiBatchAll()">全选</button><button class="bbn" onclick="apiBatchNone()">取消</button><span style="font-size:11px;color:var(--tx-m)" id="apiBatchInfo">已选${apiBatchSel.size}</span><button class="bbn red" onclick="doApiBatchDel()">🗑️删除选中</button></div></div></div>`;if(!apiConfigs.length)h+='<div style="color:var(--tx-m);text-align:center;padding:16px">无API</div>';else h+=apiConfigs.map(cfg=>`<div class="api-it ${cfg.id===curApiId?'active':''}"><div class="api-ih" onclick="tglApiExp('${cfg.id}')"><span class="arr ${expandedApis[cfg.id]?'open':''}">▶</span>${apiBatchMode?`<input type="checkbox" ${apiBatchSel.has(cfg.id)?'checked':''} onclick="sp();tglApiBatchItem('${cfg.id}')" style="width:16px;height:16px;accent-color:var(--ac)">`:''}<span class="nm">${esc(cfg.name)}</span><span class="cnt">(${cfg.models.length})</span><div class="btns" onclick="sp()"><button onclick="apiRefreshSingle('${cfg.id}')" title="刷新模型">🔄</button><button onclick="editApi('${cfg.id}')">✏️</button><button onclick="delApi('${cfg.id}')">🗑️</button></div></div><div class="api-ib ${expandedApis[cfg.id]?'show':''}">${cfg.models.map(m=>{const act=cfg.id===curApiId&&m===curModel;const isStar=starredModels.find(s=>s.apiId===cfg.id&&s.model===m);const tr=modelTestR[cfg.id+'::'+m];return`<div class="mdl-row"><span class="m-nm ${act?'active':''}" onclick="pickApiMdl('${cfg.id}','${escA(m)}')">${esc(m)}</span>${tr?`<span class="tst ${tr.status}">${tr.status==='ok'?'✅':'❌'}${tr.label}</span>`:''}<button class="${isStar?'starred':''}" onclick="tglStarP('${cfg.id}','${escA(m)}')">${isStar?'⭐':'☆'}</button><button onclick="testMdl('${cfg.id}','${escA(m)}')">🧪</button><button onclick="delMdl('${cfg.id}','${escA(m)}')">✕</button></div>`}).join('')}<div style="display:flex;gap:4px;margin-top:6px"><input type="text" id="nm-${cfg.id}" placeholder="添加模型..." style="flex:1;padding:4px 6px;background:var(--bg-t);border:1px solid var(--bd);border-radius:var(--r);color:var(--tx-p);font-size:12px"><button class="bbn" onclick="addMdlTo('${cfg.id}')">+</button><button class="bbn" onclick="fetchMdls('${cfg.id}','add')">+🔍</button><button class="bbn" onclick="fetchMdls('${cfg.id}','replace')">↻🔍</button></div></div></div>`).join('');showMoFull('🔌 API配置',h,`<button class="mo-btn sec" onclick="hideMo()">关闭</button>`)}
 
 //== apiCollapseAll ==//
 function apiCollapseAll(){apiConfigs.forEach(c=>{expandedApis[c.id]=false});saveCfg();showApiPanel()}
@@ -3793,13 +3809,21 @@ showMo('🔄 刷新全部模型','<div style="padding:8px 4px;line-height:1.7;fo
 
 //== execApiRefreshAll ==//
 async function execApiRefreshAll(){
-const btn=document.getElementById('apiRefExec'),cancel=document.getElementById('apiRefCancel'),area=document.getElementById('apiRefProgArea'),fill=document.getElementById('apiRefProgFill'),txt=document.getElementById('apiRefProgText');
-if(btn)btn.disabled=true;if(cancel)cancel.disabled=true;if(area)area.style.display='block';
+if(window._apiRefreshRunning){toast('⏳ 上次刷新还在进行中...');return}
+window._apiRefreshRunning=true;
+hideMo();
+toast(`🔄 后台刷新 ${apiConfigs.length} 个API中...`);
 const result={total:apiConfigs.length,ok:0,fail:0,added:0,removed:0,failures:[],changed:[],staleStars:[]};
-for(let i=0;i<apiConfigs.length;i++){
+const oldStateMap={};
+apiConfigs.forEach(cfg=>{oldStateMap[cfg.id]=[...(cfg.models||[])]});
+const CONCURRENCY=5;
+let idx=0;
+async function worker(){
+while(idx<apiConfigs.length){
+const i=idx++;
 const cfg=apiConfigs[i];
-if(txt)txt.textContent=i+'/'+apiConfigs.length+' · '+cfg.name;
-const oldModels=[...(cfg.models||[])];
+if(!cfg)continue;
+const oldModels=oldStateMap[cfg.id]||[];
 const r=await apiRefreshOne(cfg);
 if(r.ok){
 const newModels=r.models;
@@ -3814,13 +3838,17 @@ if(curApiId===cfg.id&&curModel&&!newSet.has(curModel))curModel=''
 result.fail++;
 result.failures.push({name:cfg.name,error:r.error||'未知错误'})
 }
-if(fill)fill.style.width=Math.round((i+1)/Math.max(apiConfigs.length,1)*100)+'%';
-if(txt)txt.textContent=(i+1)+'/'+apiConfigs.length;
-await new Promise(r=>setTimeout(r,0))
 }
+}
+try{
+const workerCount=Math.min(CONCURRENCY,apiConfigs.length);
+await Promise.all(Array.from({length:workerCount},()=>worker()));
 result.staleStars=starredModels.filter(s=>{const cfg=apiConfigs.find(c=>c.id===s.apiId);return!cfg||!cfg.models.includes(s.model)});
 window._apiRefreshResult=result;
-await saveCfg();renderApiSel();showApiRefreshResult(result)
+await saveCfg();renderApiSel();
+toast(`✓ 刷新完成: ${result.ok}成功/${result.fail}失败`);
+showApiRefreshResult(result)
+}finally{window._apiRefreshRunning=false}
 }
 
 //== apiRefreshOne ==//
@@ -3842,6 +3870,26 @@ const models=[...new Set(arr.map(m=>typeof m==='string'?m:(m.id||m.model||m.name
 if(!models.length)throw new Error('模型列表为空');
 return{ok:true,models}
 }catch(e){return{ok:false,error:e.name+': '+(e.message||'').substring(0,60)}}
+}
+
+//== apiRefreshSingle ==//
+async function apiRefreshSingle(id){
+const cfg=apiConfigs.find(c=>c.id===id);
+if(!cfg)return;
+toast(`🔄 ${cfg.name} 刷新中...`);
+const oldModels=[...(cfg.models||[])];
+const r=await apiRefreshOne(cfg);
+if(!r.ok){toast(`❌ ${cfg.name}: ${r.error}`);return}
+const oldSet=new Set(oldModels);
+const added=r.models.filter(m=>!oldSet.has(m));
+cfg.models=[...oldModels,...added];
+await saveCfg();
+renderApiSel();
+if(document.getElementById('modal')?.classList.contains('show')){
+const t=document.getElementById('moTitle')?.textContent||'';
+if(t.includes('API'))showApiPanel()
+}
+toast(added.length?`✓ ${cfg.name}: 新增 ${added.length} 个`:`✓ ${cfg.name}: 无新增`)
 }
 
 //== showApiRefreshResult ==//
