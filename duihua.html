@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
-<title>创作对话工具 v3.1.104</title>
+<title>创作对话工具 v3.1.119</title>
 <style>
 
 :root{--bg-p:#151513;--bg-s:#1d1d1a;--bg-t:#282824;--tx-p:#e8e3d8;--tx-s:#b6afa2;--tx-m:#777065;--bd:#37362f;--ac:#78bfa6;--ach:#66ad95;--ac-soft:rgba(120,191,166,.14);--ok:#79c58e;--ok-soft:rgba(121,197,142,.16);--wn:#d6a85f;--wn-soft:rgba(214,168,95,.16);--dn:#d9827b;--dn-soft:rgba(217,130,123,.16);--purple:#b68ac8;--purple-soft:rgba(182,138,200,.14);--pink:#d887a8;--pink-soft:rgba(216,135,168,.16);--gold:#d6a85f;--gold-soft:rgba(214,168,95,.16);--indigo:#8d9cc8;--indigo-soft:rgba(141,156,200,.14);--orange:#d69363;--orange-soft:rgba(214,147,99,.16);--code-bg:rgba(0,0,0,.22);--mark-bg:rgba(214,168,95,.32);--ubg:#243a34;--abg:transparent;--ts:16px;--bs:14px;--fs:15px;--safe-t:env(safe-area-inset-top);--safe-b:env(safe-area-inset-bottom);--sw:260px;--r:4px;--mat-accent:#78bfa6}
@@ -690,9 +690,6 @@ html,body{overflow-x:hidden;max-width:100vw}
 .cost-lnk{cursor:pointer;color:var(--wn);padding:1px 4px;border-radius:2px;white-space:nowrap;font-size:inherit}
 .cost-lnk:hover{background:var(--wn-soft)}
 
-/*== 只读模式 ==*/
-.read-only-mode .new-btn,.read-only-mode .sb2.pri,.read-only-mode .mo-btn.pri,.read-only-mode .tb.pri{filter:grayscale(.6);opacity:.7}
-.read-only-mode #fldSt{font-weight:600}
 </style>
 </head>
 <body>
@@ -720,7 +717,7 @@ html,body{overflow-x:hidden;max-width:100vw}
 <div class="sb-overlay" id="sbOv" onclick="closeSB()"></div>
 <div class="main-c">
 <div class="sidebar" id="sidebar">
-<div class="sb-hdr"><input type="text" id="searchConv" placeholder="🔍 搜索对话..." oninput="renderConvList()"><button class="tb" onclick="toggleBatch()" id="batchTgl">☑</button></div>
+<div class="sb-hdr"><input type="text" id="searchConv" placeholder="🔍 搜索对话..." oninput="renderConvList()"><button class="tb" onclick="document.getElementById('searchConv').value='';renderConvList()" id="searchClr" title="清空搜索">✕</button><button class="tb" onclick="toggleBatch()" id="batchTgl">☑</button></div>
 <div class="batch-bar" id="batchBar"><div class="bb-row">
 <button class="bbn" onclick="batchAll()">全选</button><button class="bbn" onclick="batchInvert()">反选</button>
 <button class="bbn" onclick="batchRange()">区间</button><button class="bbn" onclick="batchKeep()">保留最新</button>
@@ -761,7 +758,8 @@ html,body{overflow-x:hidden;max-width:100vw}
 
 <button onclick="showMsgTrash()">🗑️</button>
 <button onclick="showFGNav()">📁</button>
-<div style="position:relative;display:inline-block"><button onclick="toggleQPDD()" id="qpBtn">⚡</button><div class="qp-dd" id="qpDD"></div></div>
+<button onclick="exportConvImages()" title="导出本对话所有图片为ZIP">🖼️</button>
+<div style="position:relative;display:flex;align-items:center"><button onclick="toggleQPDD()" id="qpBtn">⚡</button><div class="qp-dd" id="qpDD"></div></div>
 <span class="nav-info" id="navInfo">0条</span>
 </div>
 <div class="msgs-wrap">
@@ -777,14 +775,14 @@ html,body{overflow-x:hidden;max-width:100vw}
 </div></div></div>
 <!-- 素材编辑器 -->
 <div class="mat-app" id="matApp"></div>
-<div class="version">v3.1.104</div>
+<div class="version">v3.1.119</div>
 <div class="mo" id="modal"><div class="mo-box" id="moBox"><div class="mo-hdr"><h3 id="moTitle"></h3><button class="mo-cls" onclick="moClose()">×</button></div><div class="mo-body" id="moBody"></div><div class="mo-ftr" id="moFtr"></div></div></div>
 <div class="ctx" id="ctxMenu"></div>
 <div class="ctx" id="convMenu"></div>
 <div class="ctx" id="grpMenu"></div>
 <script>
 // ==================== 公共区 ====================
-const VER='3.1.104',RSN_F=['reasoning_content','reasoning','thinking','thought','inner_monologue'];
+const VER='3.1.119',RSN_F=['reasoning_content','reasoning','thinking','thought','inner_monologue'];
 let _updateChecked=false;
 let materials={chars:{},charOrder:[],rels:{},relIndex:[],apps:{},appOrder:[],appGroups:{},groupOrder:[],metaPrompts:{},metaOrder:[],appKeywords:{},_sourceFile:'',_importedAt:'',_savedAt:''};
 let storyData={timelineYears:[],stories:[]},tlPointsChat=[];
@@ -817,7 +815,9 @@ let _folderIDB=null;
 let moveFolderH=null;
 let inputAttachments=[];
 const INSTANCE_ID='win_'+gid2();
-let writeLocked=false,_lockTimer=null,_lockKey=null;
+let _convLockTimer=null,_convLockId=null;
+let _matEditLockTimer=null;
+let _matLastSavedAt='';
 let priceTable={};
 let costLogs=[];
 let costSettings={enabled:true,monthlyBudget:500,warnMonthRatio:0.9,warnReqCost:2,warnTokenInput:100000,warnTokenCost:1,defaultOutputTok:3000,requireConfirmNoPrice:false};
@@ -960,7 +960,7 @@ txt.split(/={3,}/).forEach(b=>{b=b.trim();if(!b)return;let m;if(m=b.match(/【�
 
 //== saveMats ==//
 async function saveMats(){
-if(isWriteBlocked('素材保存'))return;
+
 materials._savedAt=new Date().toISOString();
 try{localStorage.setItem('matCache',JSON.stringify(materials))}catch(e){}
 if(!folderH)return;
@@ -982,7 +982,7 @@ async function saveWBKeywords(){
 if(!wbKeywords.chars)wbKeywords.chars={};
 if(!wbKeywords.apps)wbKeywords.apps={};
 try{localStorage.setItem('wbKeywords',JSON.stringify(wbKeywords))}catch(e){}
-if(isWriteBlocked('世界书关键词保存'))return;
+
 if(!folderH)return;
 try{const f=await folderH.getFileHandle('wb_keywords.json',{create:true});const w=await f.createWritable();await w.write(JSON.stringify({version:1,savedAt:new Date().toISOString(),chars:wbKeywords.chars,apps:wbKeywords.apps},null,2));await w.close()}catch(e){toast('⚠️ 世界书关键词保存失败: '+e.name)}}
 
@@ -1095,10 +1095,10 @@ function loadStoryDataChat(){try{const d=localStorage.getItem('sharedStoryData')
 async function loadStoryFile(){if(!folderH)return false;try{const f=await folderH.getFileHandle('stories.json');const d=JSON.parse(await(await f.getFile()).text());if(d.stories){storyData=d;buildTLPoints();return true}}catch(e){}return false}
 
 //== saveStoryFile ==//
-async function saveStoryFile(){if(isWriteBlocked('剧情保存'))return;if(!folderH)return;try{const f=await folderH.getFileHandle('stories.json',{create:true});const w=await f.createWritable();await w.write(JSON.stringify(storyData,null,2));await w.close()}catch(e){toast('⚠️ 剧情保存失败: '+e.name)}}
+async function saveStoryFile(){if(!folderH)return;try{const f=await folderH.getFileHandle('stories.json',{create:true});const w=await f.createWritable();await w.write(JSON.stringify(storyData,null,2));await w.close()}catch(e){toast('⚠️ 剧情保存失败: '+e.name)}}
 
 //== importStoriesJson ==//
-function importStoriesJson(){if(isWriteBlocked('导入剧情'))return;const inp=document.createElement('input');inp.type='file';inp.accept='.json';inp.onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const d=JSON.parse(await f.text());if(!d.stories&&!d.timelineYears){toast('无效的故事数据');return}storyData=d;buildTLPoints();if(folderH)await saveStoryFile();toast('✓ 剧情数据已导入 ('+storyData.stories.length+'篇)');if(typeof updateMatB==='function')updateMatB();if(isMobile&&typeof closeSB==='function')closeSB()}catch(err){toast('导入失败: '+err.message)}};inp.click()}
+function importStoriesJson(){const inp=document.createElement('input');inp.type='file';inp.accept='.json';inp.onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const d=JSON.parse(await f.text());if(!d.stories&&!d.timelineYears){toast('无效的故事数据');return}storyData=d;buildTLPoints();if(folderH)await saveStoryFile();toast('✓ 剧情数据已导入 ('+storyData.stories.length+'篇)');if(typeof updateMatB==='function')updateMatB();if(isMobile&&typeof closeSB==='function')closeSB()}catch(err){toast('导入失败: '+err.message)}};inp.click()}
 
 //== buildTLPoints ==//
 function buildTLPoints(){tlPointsChat=[];const years=(storyData.timelineYears||[]).sort((a,b)=>a.order-b.order);const sems=['fall','winter','spring','summer'];const sn={fall:'秋',winter:'寒',spring:'春',summer:'暑'};years.forEach(y=>{sems.forEach(s=>{tlPointsChat.push({yearId:y.id,yearName:y.name,yearOrder:y.order,semester:s,semName:sn[s],label:y.name+'·'+sn[s]})})})}
@@ -1106,6 +1106,8 @@ function buildTLPoints(){tlPointsChat=[];const years=(storyData.timelineYears||[
 //== switchMode ==//
 function switchMode(mode){
 if(curMode==='mat'&&typeof _matDirty!=='undefined'&&_matDirty){if(!confirm('有未保存的素材修改，确定切换？'))return}
+if(curMode==='mat'&&mode!=='mat')releaseMatEditLock();
+if(mode==='mat'){if(!acquireMatEditLock())return}
 curMode=mode;
 document.getElementById('chatApp').style.display=mode==='chat'?'flex':'none';
 document.getElementById('matApp').style.display=mode==='mat'?'block':'none';
@@ -1116,7 +1118,7 @@ const bb=document.getElementById('matBottomBar');if(bb)bb.style.display=mode==='
 
 
 //== importMatTxt ==//
-function importMatTxt(){if(isWriteBlocked('导入素材'))return;const inp=document.createElement('input');inp.type='file';inp.accept='.txt';inp.onchange=async e=>{const f=e.target.files[0];if(!f)return;parseMat(await f.text());materials._sourceFile=f.name;materials._importedAt=new Date().toISOString();await saveMats();toast('✓ 素材已导入');if(typeof updateMatB==='function')updateMatB();if(isMobile&&typeof closeSB==='function')closeSB()};inp.click()}
+function importMatTxt(){const inp=document.createElement('input');inp.type='file';inp.accept='.txt';inp.onchange=async e=>{const f=e.target.files[0];if(!f)return;parseMat(await f.text());materials._sourceFile=f.name;materials._importedAt=new Date().toISOString();await saveMats();toast('✓ 素材已导入');if(typeof updateMatB==='function')updateMatB();if(isMobile&&typeof closeSB==='function')closeSB()};inp.click()}
 
 // ==================== 对话工具区 ====================
 let convList=[],trashList=[],curTab='convs',curConvId=null,curConv=null;
@@ -1354,7 +1356,7 @@ function loadLocal(){try{const d=JSON.parse(localStorage.getItem('chatTool24')||
 function saveLocal(){try{localStorage.setItem('chatTool24',JSON.stringify({apiConfigs,curApiId,curModel,expandedApis,starredModels,groups,params,uiSettings,shortcuts,quickPhrases,workspace,priceTable,costSettings}))}catch(e){}}
 
 //== saveCfg ==//
-async function saveCfg(){saveLocal();if(isWriteBlocked('配置保存'))return;if(!folderH)return;try{const f=await folderH.getFileHandle('config.json',{create:true});const w=await f.createWritable();await w.write(JSON.stringify({version:VER,apiConfigs,curApiId,curModel,starredModels,groups,params,uiSettings,shortcuts,quickPhrases,workspace,priceTable,costSettings},null,2));await w.close()}catch(e){toast('⚠️ 配置保存失败: '+e.name+': '+(e.message||'').substring(0,40))}}
+async function saveCfg(){saveLocal();if(!folderH)return;try{const f=await folderH.getFileHandle('config.json',{create:true});const w=await f.createWritable();await w.write(JSON.stringify({version:VER,apiConfigs,curApiId,curModel,starredModels,groups,params,uiSettings,shortcuts,quickPhrases,workspace,priceTable,costSettings},null,2));await w.close()}catch(e){toast('⚠️ 配置保存失败: '+e.name+': '+(e.message||'').substring(0,40))}}
 
 //== loadCfgFile ==//
 async function loadCfgFile(){if(!folderH)return false;try{const f=await folderH.getFileHandle('config.json');const c=JSON.parse(await(await f.getFile()).text());if(c.apiConfigs)apiConfigs=c.apiConfigs;if(c.curApiId!==undefined)curApiId=c.curApiId;if(c.curModel!==undefined)curModel=c.curModel;if(c.starredModels)starredModels=c.starredModels;if(c.groups?.length)groups=c.groups;else groups=[{id:'_default',name:'默认',order:0,color:null,collapsed:false}];if(c.params){params={...params,...c.params};if(!params.contentTags||!params.contentTags.length)params.contentTags=['think','thinking'];if(params.parseContentTags===undefined)params.parseContentTags=true}if(c.uiSettings)uiSettings={...uiSettings,...c.uiSettings};if(c.localMeta)localMeta=c.localMeta;if(c.shortcuts)shortcuts={...shortcuts,...c.shortcuts};if(c.quickPhrases)quickPhrases=c.quickPhrases;if(c.priceTable)priceTable=c.priceTable;if(c.costSettings)costSettings={...costSettings,...c.costSettings};if(c.workspace)workspace={items:[],autoHours:6,activeHours:24,lastCleanAt:0,...c.workspace};if(!workspace.items)workspace.items=[];saveLocal();return true}catch(e){return false}}
@@ -1396,67 +1398,130 @@ mb.classList.toggle('fld-ok',!!name);
 mb.onclick=()=>smartFolderConnect()
 }}
 
-//== getFolderLockKey ==//
-function getFolderLockKey(){return folderH?'chatToolLock_'+folderH.name:null}
-
-//== startWorkspaceLock ==//
-function startWorkspaceLock(){
-stopWorkspaceLock(false);
-if(!folderH)return true;
-_lockKey=getFolderLockKey();
+//== acquireConvLock ==//
+function acquireConvLock(convId){
+if(!convId||!folderH)return true;
+releaseConvLock();
+const key='convLock_'+folderH.name+'_'+convId;
 const now=Date.now();
-let cur=null;
-try{cur=JSON.parse(localStorage.getItem(_lockKey)||'null')}catch(e){}
-if(cur&&cur.id!==INSTANCE_ID&&now-(cur.t||0)<8000){
-setReadOnlyMode(true,cur);
-return false
-}
-setReadOnlyMode(false);
-touchWorkspaceLock();
-_lockTimer=setInterval(touchWorkspaceLock,2000);
+try{
+const cur=JSON.parse(localStorage.getItem(key)||'null');
+if(cur&&cur.id!==INSTANCE_ID&&now-(cur.t||0)<8000)return false;
+}catch(e){}
+localStorage.setItem(key,JSON.stringify({id:INSTANCE_ID,t:now}));
+_convLockId=convId;
+if(_convLockTimer)clearInterval(_convLockTimer);
+_convLockTimer=setInterval(()=>touchConvLock(),2000);
 return true
 }
 
-//== touchWorkspaceLock ==//
-function touchWorkspaceLock(){
-if(!_lockKey||writeLocked)return;
-try{
+//== releaseConvLock ==//
+function releaseConvLock(){
+if(_convLockTimer){clearInterval(_convLockTimer);_convLockTimer=null}
+if(_convLockId&&folderH){
+const key='convLock_'+folderH.name+'_'+_convLockId;
+try{const cur=JSON.parse(localStorage.getItem(key)||'null');if(cur?.id===INSTANCE_ID)localStorage.removeItem(key)}catch(e){}
+}
+_convLockId=null
+}
+
+//== touchConvLock ==//
+function touchConvLock(){
+if(!_convLockId||!folderH)return;
+const key='convLock_'+folderH.name+'_'+_convLockId;
 const now=Date.now();
-let cur=null;
-try{cur=JSON.parse(localStorage.getItem(_lockKey)||'null')}catch(e){}
+try{
+const cur=JSON.parse(localStorage.getItem(key)||'null');
 if(cur&&cur.id!==INSTANCE_ID&&now-(cur.t||0)<8000){
-setReadOnlyMode(true,cur);
-stopWorkspaceLock(false);
+releaseConvLock();
+toast('⚠️ 对话已被另一个窗口接管');
 return
 }
-localStorage.setItem(_lockKey,JSON.stringify({id:INSTANCE_ID,t:now,folder:folderH?.name||'',url:location.href}))
+localStorage.setItem(key,JSON.stringify({id:INSTANCE_ID,t:now}))
 }catch(e){}
 }
 
-//== stopWorkspaceLock ==//
-function stopWorkspaceLock(clear){
-if(_lockTimer){clearInterval(_lockTimer);_lockTimer=null}
-if(clear&&_lockKey){try{const cur=JSON.parse(localStorage.getItem(_lockKey)||'null');if(cur?.id===INSTANCE_ID)localStorage.removeItem(_lockKey)}catch(e){}}
-}
-
-//== setReadOnlyMode ==//
-function setReadOnlyMode(v,info){
-writeLocked=v;
-document.body.classList.toggle('read-only-mode',v);
-const st=document.getElementById('fldSt');
-if(st&&folderH){
-if(v){st.textContent='🔒 只读：另一个窗口正在使用 '+folderH.name;st.style.color='var(--dn)';st.title='为避免数据丢失，本窗口禁止写入。请关闭其他窗口后刷新或重新选择文件夹。'}
-else{st.style.color='';st.title='';updateFolderUI()}
-}
-if(v)toast('⚠️ 检测到同一文件夹已在另一个窗口打开，本窗口进入只读模式')
-}
-
-//== isWriteBlocked ==//
-function isWriteBlocked(action){
-if(!writeLocked)return false;
-toast('🔒 只读模式：检测到同一文件夹已在其他窗口打开，已阻止'+(action||'写入'));
+//== isConvWritable ==//
+function isConvWritable(convId){
+if(!convId||!folderH)return true;
+if(convId===_convLockId)return true;
+const key='convLock_'+folderH.name+'_'+convId;
+try{
+const cur=JSON.parse(localStorage.getItem(key)||'null');
+if(cur&&cur.id!==INSTANCE_ID&&Date.now()-(cur.t||0)<8000)return false;
+}catch(e){}
 return true
 }
+
+//== acquireMatEditLock ==//
+function acquireMatEditLock(){
+if(!folderH)return true;
+const key='matEditLock_'+folderH.name;
+const now=Date.now();
+try{
+const cur=JSON.parse(localStorage.getItem(key)||'null');
+if(cur&&cur.id!==INSTANCE_ID&&now-(cur.t||0)<8000){
+toast('⚠️ 另一个窗口正在编辑素材');
+return false
+}
+}catch(e){}
+localStorage.setItem(key,JSON.stringify({id:INSTANCE_ID,t:now}));
+if(_matEditLockTimer)clearInterval(_matEditLockTimer);
+_matEditLockTimer=setInterval(()=>touchMatEditLock(),2000);
+return true
+}
+
+//== releaseMatEditLock ==//
+function releaseMatEditLock(){
+if(_matEditLockTimer){clearInterval(_matEditLockTimer);_matEditLockTimer=null}
+if(folderH){
+const key='matEditLock_'+folderH.name;
+try{const cur=JSON.parse(localStorage.getItem(key)||'null');if(cur?.id===INSTANCE_ID)localStorage.removeItem(key)}catch(e){}
+}
+}
+
+//== touchMatEditLock ==//
+function touchMatEditLock(){
+if(!folderH)return;
+const key='matEditLock_'+folderH.name;
+const now=Date.now();
+try{
+const cur=JSON.parse(localStorage.getItem(key)||'null');
+if(cur&&cur.id!==INSTANCE_ID&&now-(cur.t||0)<8000){
+releaseMatEditLock();
+toast('⚠️ 素材编辑锁被另一个窗口获取');
+return
+}
+localStorage.setItem(key,JSON.stringify({id:INSTANCE_ID,t:now}))
+}catch(e){}
+}
+
+//== checkMatFresh ==//
+async function checkMatFresh(){
+if(!folderH)return false;
+try{
+const f=await folderH.getFileHandle('materials.json');
+const file=await f.getFile();
+const text=await file.text();
+const disk=JSON.parse(text);
+const diskSavedAt=disk._savedAt||'';
+if(diskSavedAt&&diskSavedAt!==_matLastSavedAt){
+materials=disk;
+ensureMatFields();
+_matLastSavedAt=materials._savedAt||'';
+try{localStorage.setItem('matCache',JSON.stringify(materials))}catch(e){}
+await loadWBKeywords();
+return true
+}
+}catch(e){}
+return false
+}
+
+
+
+
+
+
 
 //== initFolderIDB ==//
 function initFolderIDB(){return new Promise(resolve=>{try{const req=indexedDB.open('ChatToolFolderDB',1);req.onupgradeneeded=e=>{e.target.result.createObjectStore('handles')};req.onsuccess=e=>{_folderIDB=e.target.result;resolve()};req.onerror=()=>resolve()}catch(e){resolve()}})}
@@ -1725,29 +1790,25 @@ const p2=await h.requestPermission({mode:'readwrite'});
 if(p2==='granted'){
 folderH=h;
 _dirHandleCache={};
-startWorkspaceLock();
 const hasCfg=await loadCfgFile();
 if(!hasCfg)groups=[{id:'_default',name:'默认',order:0,color:null,collapsed:false}];
 await loadFolder();
 if(!hasCfg)await saveCfg();
 updateFolderUI();
-startWorkspaceLock();
 applyUI();
 renderApiSel();
-toast(writeLocked?'⚠️ 已恢复但处于只读模式':'✓ 已恢复')
+toast('✓ 已恢复')
 }else toast('⚠️ 授权被拒绝')
 }catch(e){toast('⚠️ 授权失败')}
 };
 if(perm==='granted'){
 folderH=h;
 _dirHandleCache={};
-startWorkspaceLock();
 const hasCfg=await loadCfgFile();
 if(!hasCfg)groups=[{id:'_default',name:'默认',order:0,color:null,collapsed:false}];
 await loadFolder();
 if(!hasCfg)await saveCfg();
 updateFolderUI();
-startWorkspaceLock();
 applyUI();
 renderApiSel();
 return
@@ -1779,9 +1840,8 @@ mb.onclick=doRestore
 function setupViewport(){if(!window.visualViewport)return;const app=document.querySelector('.app');const modal=document.getElementById('modal');let pending=false;window.visualViewport.addEventListener('resize',()=>{if(pending)return;pending=true;requestAnimationFrame(()=>{pending=false;const ae=document.activeElement;const wasInput=ae&&ae.id==='userIn';const vh=window.visualViewport.height;const wh=window.innerHeight;if(vh<wh*0.85){kbOn=true;app.style.height=vh+'px';modal.style.height=vh+'px';modal.style.alignItems='flex-start';modal.style.paddingTop='0';window.scrollTo(0,0)}else{kbOn=false;app.style.height='';modal.style.height='';modal.style.alignItems='';modal.style.paddingTop='';}const ta=document.getElementById('userIn');if(ta)autoRsz(ta);if(wasInput&&document.activeElement!==ae){try{ae.focus()}catch(e){}}})});window.visualViewport.addEventListener('scroll',()=>{window.scrollTo(0,0)})}
 
 //== setupBeforeUnload ==//
-function setupBeforeUnload(){window.addEventListener('beforeunload',()=>{saveSession();saveStreamingState()});document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'){saveSession();saveStreamingState()}})
-window.addEventListener('pagehide',()=>stopWorkspaceLock(true));
-window.addEventListener('storage',e=>{if(_lockKey&&e.key===_lockKey&&folderH){try{const cur=JSON.parse(e.newValue||'null');if(cur&&cur.id!==INSTANCE_ID&&Date.now()-(cur.t||0)<8000)setReadOnlyMode(true,cur)}catch(err){}}});}
+function setupBeforeUnload(){window.addEventListener('beforeunload',()=>{saveSession();saveStreamingState()});document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'){saveSession();saveStreamingState()}else if(document.visibilityState==='visible'){checkMatFresh()}})
+window.addEventListener('pagehide',()=>{releaseConvLock();releaseMatEditLock()});}
 
 //== saveStreamingState ==//
 async function saveStreamingState(){for(const[cid,reqs]of Object.entries(pendReqs)){for(const req of reqs){if(req.status!=='generating'||!req.content)continue;const conv=cid===curConvId&&curConv?curConv:await loadConvFull(cid);if(!conv)continue;const msg=conv.messages.find(m=>m.id===req.msgId);if(msg){msg.content=req.content;if(req.reasoning){msg.reasoning=req.reasoning;msg.reasoningDuration=req.reasoningStart?((req.reasoningEnd||Date.now())-req.reasoningStart):0}if(req.firstTokenTime)msg.firstTokenMs=req.firstTokenTime-req.startTime;conv.updatedAt=new Date().toISOString();await saveConvF(conv)}}}}
@@ -1875,7 +1935,7 @@ showMo('📄 存为附录',`<div class="fg"><label>名称</label><input type="te
 
 //== doMsgToApp ==//
 function doMsgToApp(){
-if(isWriteBlocked('存为附录'))return;
+
 const nm=document.getElementById('m2aNm')?.value?.trim();
 const ct=document.getElementById('m2aCt')?.value?.trim();
 const kw=document.getElementById('m2aKw')?.value?.trim();
@@ -1917,7 +1977,7 @@ async function moveConvPos(srcId,tgtId,above){if(srcId===tgtId)return;const si=c
 async function moveConvToGrp(cid,gid){const m=convList.find(c=>c.id===cid);if(!m||m.groupId===gid)return;const old=m.groupId||'_default';m.groupId=gid;const conv=await loadConvFull(cid);if(!conv)return;conv.groupId=gid;conv.updatedAt=new Date().toISOString();await moveConvFile(cid,old,gid);await saveConvF(conv);if(curConvId===cid&&curConv)curConv.groupId=gid;renderConvList();toast('✓ 已移动')}
 
 //== moveConvFile ==//
-async function moveConvFile(cid,fg,tg2){if(isWriteBlocked('移动对话文件'))return;if(!folderH)return;const fn=`conv_${cid}.json`;try{const cd=await folderH.getDirectoryHandle('conversations',{create:true});const fd=await cd.getDirectoryHandle(getGrpDir(fg),{create:true});const td=await cd.getDirectoryHandle(getGrpDir(tg2),{create:true});const fh=await fd.getFileHandle(fn);const ct=await(await fh.getFile()).text();const nf=await td.getFileHandle(fn,{create:true});const w=await nf.createWritable();await w.write(ct);await w.close();await fd.removeEntry(fn);const m=convList.find(c=>c.id===cid);if(m)m._dir=getGrpDir(tg2)}catch(e){toast('⚠️ 移动文件失败: '+e.name+': '+(e.message||'').substring(0,40))}}
+async function moveConvFile(cid,fg,tg2){if(!folderH)return;const fn=`conv_${cid}.json`;try{const cd=await folderH.getDirectoryHandle('conversations',{create:true});const fd=await cd.getDirectoryHandle(getGrpDir(fg),{create:true});const td=await cd.getDirectoryHandle(getGrpDir(tg2),{create:true});const fh=await fd.getFileHandle(fn);const ct=await(await fh.getFile()).text();const nf=await td.getFileHandle(fn,{create:true});const w=await nf.createWritable();await w.write(ct);await w.close();await fd.removeEntry(fn);const m=convList.find(c=>c.id===cid);if(m)m._dir=getGrpDir(tg2)}catch(e){toast('⚠️ 移动文件失败: '+e.name+': '+(e.message||'').substring(0,40))}}
 
 //== getGrpDir ==//
 function getGrpDir(gid){if(gid==='_default')return'_default';const g=groups.find(g=>g.id===gid);return g?sanitizeDir(g.name):'_default'}
@@ -1935,7 +1995,7 @@ function fixModelsUrl(url){url=url.trim().replace(/\/+$/,'');url=url.replace(/\/
 function normalizeApiUrl(url){return(url||'').trim().replace(/\/+$/,'').replace(/\/chat\/completions\/?$/,'').replace(/\/models\/?$/,'').replace(/\/v\d+\/?$/,'').toLowerCase()}
 
 //== saveIndex ==//
-async function saveIndex(){if(isWriteBlocked('索引保存'))return;if(!folderH)return;try{const cd=await folderH.getDirectoryHandle('conversations',{create:true});const f=await cd.getFileHandle('_index.json',{create:true});const w=await f.createWritable();await w.write(JSON.stringify({v:1,items:convList.map(c=>({id:c.id,name:c.name,pinned:c.pinned,order:c.order,msgCount:c.msgCount,updatedAt:c.updatedAt,groupId:c.groupId,_fn:c._fn,_dir:c._dir})),trash:trashList.map(c=>({id:c.id,name:c.name,msgCount:c.msgCount,deletedAt:c.deletedAt,_fn:c._fn}))}));await w.close()}catch(e){}}
+async function saveIndex(){if(!folderH)return;try{const cd=await folderH.getDirectoryHandle('conversations',{create:true});const f=await cd.getFileHandle('_index.json',{create:true});const w=await f.createWritable();await w.write(JSON.stringify({v:1,items:convList.map(c=>({id:c.id,name:c.name,pinned:c.pinned,order:c.order,msgCount:c.msgCount,updatedAt:c.updatedAt,groupId:c.groupId,_fn:c._fn,_dir:c._dir})),trash:trashList.map(c=>({id:c.id,name:c.name,msgCount:c.msgCount,deletedAt:c.deletedAt,_fn:c._fn}))}));await w.close()}catch(e){}}
 
 //== scheduleIndexSave ==//
 function scheduleIndexSave(){clearTimeout(_indexTimer);_indexTimer=setTimeout(()=>{saveIndex()},500)}
@@ -1947,7 +2007,7 @@ async function loadIndex(){if(!folderH)return false;try{const cd=await folderH.g
 async function rebuildIndex(){if(!folderH){toast('请先选择文件夹');return}showMo('🔄 重建索引',`<div style="text-align:center;padding:20px"><div id="riStatus">扫描中...</div><div class="prog-bar"><div class="prog-fill" id="riProgFill" style="width:0%"></div></div><div class="prog-text" id="riProgText">0%</div></div>`,'');await new Promise(r=>setTimeout(r,30));convList=[];trashList=[];const cd=await folderH.getDirectoryHandle('conversations',{create:true});const dirEntries=[];for await(const en of cd.values()){if(en.kind!=='directory'||en.name==='_trash')continue;const dir=await cd.getDirectoryHandle(en.name);const files=[];for await(const fe of dir.values()){if(fe.kind==='file'&&fe.name.endsWith('.json')&&fe.name!=='_index.json')files.push(fe)}dirEntries.push({name:en.name,dir,files})}const totalFiles=dirEntries.reduce((s,d)=>s+d.files.length,0);let loadedFiles=0;for(const de of dirEntries){const dn=de.name;if(!de.files.length)continue;let gid=dn==='_default'?'_default':(groups.find(g=>g.id!=='_default'&&getGrpDir(g.id)===dn)?.id||'_default');for(const fe of de.files){try{const d=JSON.parse(await(await fe.getFile()).text());let finalGid=d.groupId||gid;if(finalGid!=='_default'&&!groups.find(g=>g.id===finalGid))finalGid=gid;convList.push({id:d.id,name:d.name||'?',pinned:d.pinned||false,order:d.order??999,msgCount:d.messages?.length||0,updatedAt:d.updatedAt,groupId:finalGid,_fn:fe.name,_dir:dn})}catch(e){}loadedFiles++;if(loadedFiles%5===0||loadedFiles===totalFiles){const s=document.getElementById('riStatus'),f=document.getElementById('riProgFill'),t=document.getElementById('riProgText');if(s)s.textContent=`${loadedFiles}/${totalFiles}`;if(f)f.style.width=Math.round(loadedFiles/Math.max(totalFiles,1)*100)+'%';if(t)t.textContent=Math.round(loadedFiles/Math.max(totalFiles,1)*100)+'%';await new Promise(r=>setTimeout(r,0))}}}try{const td=await folderH.getDirectoryHandle('_trash',{create:true});for await(const en of td.values()){if(en.kind==='file'&&en.name.endsWith('.json')){try{const d=JSON.parse(await(await en.getFile()).text());trashList.push({id:d.id,name:d.name||'?',msgCount:d.messages?.length||0,deletedAt:d.deletedAt,_fn:en.name})}catch(e){}}}}catch(e){}sortConvList();await saveIndex();renderConvList();hideMo();ok(`索引已重建 (${convList.length}个对话)`)}
 
 //== selectFolder ==//
-async function selectFolder(){try{folderH=await window.showDirectoryPicker({mode:'readwrite'});saveFolderHandleIDB(folderH);_dirHandleCache={};startWorkspaceLock();const hasCfg=await loadCfgFile();if(!hasCfg){groups=[{id:'_default',name:'默认',order:0,color:null,collapsed:false}]}await loadFolder();if(!hasCfg)await saveCfg();updateFolderUI();startWorkspaceLock();applyUI();renderApiSel();toast(writeLocked?'⚠️ 已连接但处于只读模式':'✓ 已连接');if(isMobile)closeSB()}catch(e){if(e.name!=='AbortError')toast('❌ 选择文件夹失败: '+e.name+': '+(e.message||'').substring(0,60))}}
+async function selectFolder(){try{folderH=await window.showDirectoryPicker({mode:'readwrite'});saveFolderHandleIDB(folderH);_dirHandleCache={};const hasCfg=await loadCfgFile();if(!hasCfg){groups=[{id:'_default',name:'默认',order:0,color:null,collapsed:false}]}await loadFolder();if(!hasCfg)await saveCfg();updateFolderUI();applyUI();renderApiSel();toast('✓ 已连接');if(isMobile)closeSB()}catch(e){if(e.name!=='AbortError')toast('❌ 选择文件夹失败: '+e.name+': '+(e.message||'').substring(0,60))}}
 
 //== smartFolderConnect ==//
 async function smartFolderConnect(){
@@ -1961,25 +2021,23 @@ try{
 let perm=await h.queryPermission({mode:'readwrite'});
 if(perm==='granted'){
 folderH=h;_dirHandleCache={};
-startWorkspaceLock();
 const hasCfg=await loadCfgFile();
 if(!hasCfg)groups=[{id:'_default',name:'默认',order:0,color:null,collapsed:false}];
 await loadFolder();
 if(!hasCfg)await saveCfg();
-updateFolderUI();startWorkspaceLock();applyUI();renderApiSel();
-toast(writeLocked?'⚠️ 已恢复但处于只读模式':'✓ 已恢复');
+updateFolderUI();applyUI();renderApiSel();
+toast('✓ 已恢复');
 return
 }
 perm=await h.requestPermission({mode:'readwrite'});
 if(perm==='granted'){
 folderH=h;_dirHandleCache={};
-startWorkspaceLock();
 const hasCfg=await loadCfgFile();
 if(!hasCfg)groups=[{id:'_default',name:'默认',order:0,color:null,collapsed:false}];
 await loadFolder();
 if(!hasCfg)await saveCfg();
-updateFolderUI();startWorkspaceLock();applyUI();renderApiSel();
-toast(writeLocked?'⚠️ 已恢复但处于只读模式':'✓ 已恢复');
+updateFolderUI();applyUI();renderApiSel();
+toast('✓ 已恢复');
 return
 }
 toast('⚠️ 授权被拒绝，请重新选择文件夹');
@@ -2023,11 +2081,11 @@ lfUpd('加载回收站...',88);
 try{const td=await folderH.getDirectoryHandle('_trash',{create:true});for await(const en of td.values()){if(en.kind==='file'&&en.name.endsWith('.json')){try{const d=JSON.parse(await(await en.getFile()).text());trashList.push({id:d.id,name:d.name||'?',msgCount:d.messages?.length||0,deletedAt:d.deletedAt,_fn:en.name})}catch(e){}}}}catch(e){}
 lfUpd('保存索引...',93);
 await saveIndex()}
-lfUpd('完成',100);loadMatUndo();try{const _clf=await folderH.getFileHandle('cost_logs.json');const _cld=JSON.parse(await(await _clf.getFile()).text());if(_cld.items){const mr=mergeCostLogs(costLogs,_cld.items);costLogs=mr.items;try{localStorage.setItem('costLogs',JSON.stringify(costLogs.slice(0,10000)))}catch(e){}}}catch(e){}sortConvList();renderConvList();hideMo();
+lfUpd('完成',100);_matLastSavedAt=materials._savedAt||'';loadMatUndo();try{const _clf=await folderH.getFileHandle('cost_logs.json');const _cld=JSON.parse(await(await _clf.getFile()).text());if(_cld.items){const mr=mergeCostLogs(costLogs,_cld.items);costLogs=mr.items;try{localStorage.setItem('costLogs',JSON.stringify(costLogs.slice(0,10000)))}catch(e){}}}catch(e){}sortConvList();renderConvList();hideMo();
 const lastId=getLastId();const target=convList.find(c=>c.id===lastId);if(target)await selectConv(target.id);else if(convList.length>0)await selectConv(convList[0].id);else{curConv=null;curConvId=null;renderMsgs()}}
 
 //== migrateFlat ==//
-async function migrateFlat(cd){if(isWriteBlocked('旧格式迁移'))return;const dd=await cd.getDirectoryHandle('_default',{create:true});const files=[];for await(const en of cd.values()){if(en.kind==='file'&&en.name.endsWith('.json')&&en.name!=='_index.json')files.push(en)}for(const f of files){try{const ct=await(await f.getFile()).text();const nf=await dd.getFileHandle(f.name,{create:true});const w=await nf.createWritable();await w.write(ct);await w.close();await cd.removeEntry(f.name)}catch(e){}}}
+async function migrateFlat(cd){const dd=await cd.getDirectoryHandle('_default',{create:true});const files=[];for await(const en of cd.values()){if(en.kind==='file'&&en.name.endsWith('.json')&&en.name!=='_index.json')files.push(en)}for(const f of files){try{const ct=await(await f.getFile()).text();const nf=await dd.getFileHandle(f.name,{create:true});const w=await nf.createWritable();await w.write(ct);await w.close();await cd.removeEntry(f.name)}catch(e){}}}
 
 //== sortConvList ==//
 function sortConvList(){const go=id=>{const g=groups.find(g=>g.id===id);return g?.order??999};convList.sort((a,b)=>{const ga=go(a.groupId||'_default'),gb=go(b.groupId||'_default');if(ga!==gb)return ga-gb;if(a.pinned&&!b.pinned)return-1;if(!a.pinned&&b.pinned)return 1;return(a.order??999)-(b.order??999)})}
@@ -2037,8 +2095,8 @@ async function loadConvFull(id){if(!folderH)return null;const m=convList.find(c=
 
 //== saveConvF ==//
 async function saveConvF(conv){
-if(isWriteBlocked('对话保存'))return false;
 if(!folderH||!conv){if(!folderH)toast('请先选择文件夹');return false}
+if(conv.id&&!isConvWritable(conv.id)){return false}
 let resolve;const myTurn=new Promise(r=>{resolve=r});
 const prevQueue=_saveQueue;_saveQueue=myTurn;
 await prevQueue;
@@ -2070,25 +2128,25 @@ else{toast('❌ 保存失败: '+e.name+': '+(e.message||'').substring(0,40));ret
 }}return false}
 
 //== moveToTrash ==//
-async function moveToTrash(id){if(isWriteBlocked('删除对话'))return false;if(!folderH)return false;const m=convList.find(c=>c.id===id);if(!m)return;cancelConvReqs(id);try{const cd=await folderH.getDirectoryHandle('conversations');const dir=await cd.getDirectoryHandle(m._dir||getGrpDir(m.groupId||'_default'));const td=await folderH.getDirectoryHandle('_trash',{create:true});const fh=await dir.getFileHandle(m._fn);const d=JSON.parse(await(await fh.getFile()).text());d.deletedAt=new Date().toISOString();d.deletedFrom=m.groupId||'_default';const tf=await td.getFileHandle(m._fn,{create:true});const w=await tf.createWritable();await w.write(JSON.stringify(d,null,2));await w.close();await dir.removeEntry(m._fn);convList=convList.filter(c=>c.id!==id);trashList.push({id:d.id,name:d.name,msgCount:d.messages?.length||0,deletedAt:d.deletedAt,_fn:m._fn});scheduleIndexSave();return true}catch(e){toast('❌ 删除失败: '+e.name+': '+(e.message||'').substring(0,40));return false}}
+async function moveToTrash(id){if(!folderH)return false;const m=convList.find(c=>c.id===id);if(!m)return;cancelConvReqs(id);try{const cd=await folderH.getDirectoryHandle('conversations');const dir=await cd.getDirectoryHandle(m._dir||getGrpDir(m.groupId||'_default'));const td=await folderH.getDirectoryHandle('_trash',{create:true});const fh=await dir.getFileHandle(m._fn);const d=JSON.parse(await(await fh.getFile()).text());d.deletedAt=new Date().toISOString();d.deletedFrom=m.groupId||'_default';const tf=await td.getFileHandle(m._fn,{create:true});const w=await tf.createWritable();await w.write(JSON.stringify(d,null,2));await w.close();await dir.removeEntry(m._fn);convList=convList.filter(c=>c.id!==id);trashList.push({id:d.id,name:d.name,msgCount:d.messages?.length||0,deletedAt:d.deletedAt,_fn:m._fn});scheduleIndexSave();return true}catch(e){toast('❌ 删除失败: '+e.name+': '+(e.message||'').substring(0,40));return false}}
 
 //== batchMoveToTrash ==//
-async function batchMoveToTrash(ids,onProgress){if(isWriteBlocked('批量删除对话'))return{done:0,failed:ids?.length||0};if(!folderH||!ids.length)return{done:0,failed:0};const cd=await folderH.getDirectoryHandle('conversations');const td=await folderH.getDirectoryHandle('_trash',{create:true});const dirCache={};const now=new Date().toISOString();let done=0,failed=0;const deletedIds=new Set();for(const id of ids){const m=convList.find(c=>c.id===id);if(!m){done++;if(onProgress)onProgress(done,ids.length,failed);continue}cancelConvReqs(id);try{const dn=m._dir||getGrpDir(m.groupId||'_default');if(!dirCache[dn])dirCache[dn]=await cd.getDirectoryHandle(dn);const dir=dirCache[dn];const fh=await dir.getFileHandle(m._fn);const raw=await(await fh.getFile()).text();let out;if(raw.trimStart().startsWith('{')){out='{"deletedAt":'+JSON.stringify(now)+',"deletedFrom":'+JSON.stringify(m.groupId||'_default')+','+raw.trimStart().substring(1)}else out=raw;const tf=await td.getFileHandle(m._fn,{create:true});const w=await tf.createWritable();await w.write(out);await w.close();await dir.removeEntry(m._fn);deletedIds.add(id);trashList.push({id:m.id,name:m.name,msgCount:m.msgCount||0,deletedAt:now,_fn:m._fn})}catch(e){failed++}done++;if(onProgress&&(done%5===0||done===ids.length))onProgress(done,ids.length,failed);if(done%5===0)await new Promise(r=>setTimeout(r,0))}convList=convList.filter(c=>!deletedIds.has(c.id));scheduleIndexSave();return{done:done-failed,failed}}
+async function batchMoveToTrash(ids,onProgress){if(!folderH||!ids.length)return{done:0,failed:0};const cd=await folderH.getDirectoryHandle('conversations');const td=await folderH.getDirectoryHandle('_trash',{create:true});const dirCache={};const now=new Date().toISOString();let done=0,failed=0;const deletedIds=new Set();for(const id of ids){const m=convList.find(c=>c.id===id);if(!m){done++;if(onProgress)onProgress(done,ids.length,failed);continue}cancelConvReqs(id);try{const dn=m._dir||getGrpDir(m.groupId||'_default');if(!dirCache[dn])dirCache[dn]=await cd.getDirectoryHandle(dn);const dir=dirCache[dn];const fh=await dir.getFileHandle(m._fn);const raw=await(await fh.getFile()).text();let out;if(raw.trimStart().startsWith('{')){out='{"deletedAt":'+JSON.stringify(now)+',"deletedFrom":'+JSON.stringify(m.groupId||'_default')+','+raw.trimStart().substring(1)}else out=raw;const tf=await td.getFileHandle(m._fn,{create:true});const w=await tf.createWritable();await w.write(out);await w.close();await dir.removeEntry(m._fn);deletedIds.add(id);trashList.push({id:m.id,name:m.name,msgCount:m.msgCount||0,deletedAt:now,_fn:m._fn})}catch(e){failed++}done++;if(onProgress&&(done%5===0||done===ids.length))onProgress(done,ids.length,failed);if(done%5===0)await new Promise(r=>setTimeout(r,0))}convList=convList.filter(c=>!deletedIds.has(c.id));scheduleIndexSave();return{done:done-failed,failed}}
 
 //== restoreTrash ==//
-async function restoreTrash(id){if(isWriteBlocked('恢复对话'))return;if(!folderH)return;const m=trashList.find(c=>c.id===id);if(!m)return;try{const td=await folderH.getDirectoryHandle('_trash');const fh=await td.getFileHandle(m._fn);const d=JSON.parse(await(await fh.getFile()).text());const gid=d.deletedFrom||'_default';delete d.deletedAt;delete d.deletedFrom;d.groupId=gid;d.updatedAt=new Date().toISOString();const cd=await folderH.getDirectoryHandle('conversations',{create:true});const dir=await cd.getDirectoryHandle(getGrpDir(gid),{create:true});const nf=await dir.getFileHandle(m._fn,{create:true});const w=await nf.createWritable();await w.write(JSON.stringify(d,null,2));await w.close();await td.removeEntry(m._fn);trashList=trashList.filter(c=>c.id!==id);convList.push({id:d.id,name:d.name,pinned:d.pinned||false,order:d.order??999,msgCount:d.messages?.length||0,updatedAt:d.updatedAt,groupId:gid,_fn:m._fn,_dir:getGrpDir(gid)});sortConvList();scheduleIndexSave()}catch(e){toast('❌ 恢复失败: '+e.name)}}
+async function restoreTrash(id){if(!folderH)return;const m=trashList.find(c=>c.id===id);if(!m)return;try{const td=await folderH.getDirectoryHandle('_trash');const fh=await td.getFileHandle(m._fn);const d=JSON.parse(await(await fh.getFile()).text());const gid=d.deletedFrom||'_default';delete d.deletedAt;delete d.deletedFrom;d.groupId=gid;d.updatedAt=new Date().toISOString();const cd=await folderH.getDirectoryHandle('conversations',{create:true});const dir=await cd.getDirectoryHandle(getGrpDir(gid),{create:true});const nf=await dir.getFileHandle(m._fn,{create:true});const w=await nf.createWritable();await w.write(JSON.stringify(d,null,2));await w.close();await td.removeEntry(m._fn);trashList=trashList.filter(c=>c.id!==id);convList.push({id:d.id,name:d.name,pinned:d.pinned||false,order:d.order??999,msgCount:d.messages?.length||0,updatedAt:d.updatedAt,groupId:gid,_fn:m._fn,_dir:getGrpDir(gid)});sortConvList();scheduleIndexSave()}catch(e){toast('❌ 恢复失败: '+e.name)}}
 
 //== emptyTrash ==//
 async function emptyTrash(){if(!folderH||!trashList.length)return;showMo('确认','<div style="padding:10px;text-align:center">永久删除 '+trashList.length+' 个对话？</div>',`<button class="mo-btn sec" onclick="hideMo()">取消</button><button class="mo-btn dn" onclick="hideMo();doEmptyTrash()">永久删除</button>`,'compact')}
 
 //== doEmptyTrash ==//
-async function doEmptyTrash(){if(isWriteBlocked('清空回收站'))return;try{const td=await folderH.getDirectoryHandle('_trash');for(const m of trashList){try{await td.removeEntry(m._fn)}catch(e){}}trashList=[];scheduleIndexSave();renderConvList();ok()}catch(e){toast('❌ 清空回收站失败: '+e.name)}}
+async function doEmptyTrash(){try{const td=await folderH.getDirectoryHandle('_trash');for(const m of trashList){try{await td.removeEntry(m._fn)}catch(e){}}trashList=[];scheduleIndexSave();renderConvList();ok()}catch(e){toast('❌ 清空回收站失败: '+e.name)}}
 
 //== ensureMsgTrashLoaded ==//
 async function ensureMsgTrashLoaded(){if(_msgTrashLoaded)return;if(folderH){try{const f=await folderH.getFileHandle('msg_trash.json');const d=JSON.parse(await(await f.getFile()).text());msgTrashData=d.items||[]}catch(e){msgTrashData=[]}}else{try{msgTrashData=JSON.parse(localStorage.getItem('msgTrash')||'[]')}catch(e){msgTrashData=[]}}_msgTrashLoaded=true}
 
 //== saveMsgTrashFile ==//
-async function saveMsgTrashFile(){if(isWriteBlocked('消息回收站保存')){try{localStorage.setItem('msgTrash',JSON.stringify(msgTrashData))}catch(e){}return}if(msgTrashData.length>500)msgTrashData=msgTrashData.slice(0,500);let size=0;try{size=JSON.stringify(msgTrashData).length}catch(e){}while(size>5*1024*1024&&msgTrashData.length>0){msgTrashData.pop();try{size=JSON.stringify(msgTrashData).length}catch(e){break}}if(folderH){try{const f=await folderH.getFileHandle('msg_trash.json',{create:true});const w=await f.createWritable();await w.write(JSON.stringify({items:msgTrashData,_savedAt:new Date().toISOString()}));await w.close()}catch(e){}}try{localStorage.setItem('msgTrash',JSON.stringify(msgTrashData))}catch(e){}}
+async function saveMsgTrashFile(){if(msgTrashData.length>500)msgTrashData=msgTrashData.slice(0,500);let size=0;try{size=JSON.stringify(msgTrashData).length}catch(e){}while(size>5*1024*1024&&msgTrashData.length>0){msgTrashData.pop();try{size=JSON.stringify(msgTrashData).length}catch(e){break}}if(folderH){try{const f=await folderH.getFileHandle('msg_trash.json',{create:true});const w=await f.createWritable();await w.write(JSON.stringify({items:msgTrashData,_savedAt:new Date().toISOString()}));await w.close()}catch(e){}}try{localStorage.setItem('msgTrash',JSON.stringify(msgTrashData))}catch(e){}}
 
 //== addToMsgTrash ==//
 async function addToMsgTrash(msgs,convName,convId){if(!msgs||!msgs.length)return;await ensureMsgTrashLoaded();const now=new Date().toISOString();msgs.forEach((m,i)=>{msgTrashData.unshift({id:m.id||gid2(),role:m.role,content:m.content||'',reasoning:m.reasoning||'',convName:convName||'?',convId:convId||'',deletedAt:now,originalIdx:m._origIdx!=null?m._origIdx:i})});await saveMsgTrashFile()}
@@ -2152,7 +2210,7 @@ function batchKeep(){const n=prompt('保留最新几个？','10');if(!n)return;c
 async function batchDel(){if(!batchSel.size){toast('未选中');return}showMo('确认批量删除',`<div style="padding:10px;text-align:center">将 ${batchSel.size} 个对话移至回收站？</div><div class="prog-bar" id="batchProg" style="display:none"><div class="prog-fill" id="batchProgFill" style="width:0%"></div></div><div class="prog-text" id="batchProgText" style="display:none"></div>`,`<button class="mo-btn sec" id="batchCancelBtn" onclick="hideMo()">取消</button><button class="mo-btn dn" id="batchConfirmBtn" onclick="doBatchDel()">删除</button>`,'compact')}
 
 //== doBatchDel ==//
-async function doBatchDel(){if(isWriteBlocked('批量删除对话'))return;const btn=document.getElementById('batchConfirmBtn'),cancelBtn=document.getElementById('batchCancelBtn');if(btn)btn.disabled=true;if(cancelBtn)cancelBtn.disabled=true;const prog=document.getElementById('batchProg'),progFill=document.getElementById('batchProgFill'),progText=document.getElementById('batchProgText');if(prog)prog.style.display='block';if(progText)progText.style.display='block';const ids=[...batchSel];const needNewConv=ids.includes(curConvId);if(needNewConv){curConv=null;curConvId=null}const{done,failed}=await batchMoveToTrash(ids,(d,t,f)=>{const pct=Math.round(d/t*100);if(progFill)progFill.style.width=pct+'%';if(progText)progText.textContent=`${d}/${t}${f?' ('+f+'失败)':''}`});batchSel.clear();updBI();if(!curConvId&&convList.length>0)await selectConv(convList[0].id);else if(!convList.length)renderMsgs();renderConvList();hideMo();ok(`已删除${done}个${failed?' ('+failed+'失败)':''}`)}
+async function doBatchDel(){const btn=document.getElementById('batchConfirmBtn'),cancelBtn=document.getElementById('batchCancelBtn');if(btn)btn.disabled=true;if(cancelBtn)cancelBtn.disabled=true;const prog=document.getElementById('batchProg'),progFill=document.getElementById('batchProgFill'),progText=document.getElementById('batchProgText');if(prog)prog.style.display='block';if(progText)progText.style.display='block';const ids=[...batchSel];const needNewConv=ids.includes(curConvId);if(needNewConv){curConv=null;curConvId=null}const{done,failed}=await batchMoveToTrash(ids,(d,t,f)=>{const pct=Math.round(d/t*100);if(progFill)progFill.style.width=pct+'%';if(progText)progText.textContent=`${d}/${t}${f?' ('+f+'失败)':''}`});batchSel.clear();updBI();if(!curConvId&&convList.length>0)await selectConv(convList[0].id);else if(!convList.length)renderMsgs();renderConvList();hideMo();ok(`已删除${done}个${failed?' ('+failed+'失败)':''}`)}
 
 //== batchMov ==//
 function batchMov(){if(!batchSel.size){toast('未选中');return}const opts=groups.map(g=>`<div class="ctx-i" onclick="hideMo();doBM('${g.id}')">${esc(g.name)}</div>`).join('');showMo(`移动${batchSel.size}个到`,opts,`<button class="mo-btn sec" onclick="hideMo()">取消</button>`,'compact')}
@@ -2332,10 +2390,10 @@ renderConvList();hideMo();ok(`已清理${done}个${failed?' ('+failed+'失败)':
 function switchTab(t){curTab=t;document.querySelectorAll('.sb-tab').forEach(el=>el.classList.toggle('active',el.dataset.tab===t));renderConvList()}
 
 //== createConv ==//
-async function createConv(){if(isWriteBlocked('新建对话'))return;if(!folderH){toast('请先选择文件夹');return}const conv={id:gid2(),name:'新对话',pinned:false,order:0,groupId:'_default',createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),materialConfig:defMC(),convParams:{},messages:[],tempAppendices:[]};convList.filter(c=>(c.groupId||'_default')==='_default').forEach(c=>c.order=(c.order??0)+1);await saveConvF(conv);sortConvList();renderConvList();await selectConv(conv.id);if(isMobile)closeSB()}
+async function createConv(){if(!folderH){toast('请先选择文件夹');return}const conv={id:gid2(),name:'新对话',pinned:false,order:0,groupId:'_default',createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),materialConfig:defMC(),convParams:{},messages:[],tempAppendices:[]};convList.filter(c=>(c.groupId||'_default')==='_default').forEach(c=>c.order=(c.order??0)+1);await saveConvF(conv);sortConvList();renderConvList();await selectConv(conv.id);if(isMobile)closeSB()}
 
 //== selectConv ==//
-async function selectConv(id){if(curConvId===id&&curConv)return;if(curConvId){saveSession();const _di=document.getElementById('userIn');const _dt=_di?_di.value:'';const _da=[...inputAttachments];if(_dt||_da.length)convDrafts[curConvId]={text:_dt,attachments:_da};else delete convDrafts[curConvId];if(curConv){saveFoldState();if(_foldDirty){_foldDirty=false;await saveConvF(curConv)}}}fgCreateStart=null;curConv=null;curConvId=id;curConv=await loadConvFull(id);autoScrollOn=true;foldMgr.reset();if(curConv){touchWorkspace(id,'open');if(!curConv.materialConfig)curConv.materialConfig=defMC();if(!curConv.convParams)curConv.convParams={};if(curConv.foldedMsgIds&&curConv.foldedMsgIds.length){curConv.foldedMsgIds.forEach(id=>foldMgr._folded.add(id))}else{foldMgr.initFold(curConv.messages)}_foldDirty=false;document.getElementById('chTitle').textContent=curConv.name;updateToolbarTitle();renderMsgs();updateMatB();updateTmpB();updateParamB();updateLockB();renderApiSel();updateTokCnt();updateStopBar();updateStreamBtn();updateTagBtn();const _di2=document.getElementById('userIn');if(_di2){const _dr=convDrafts[id];if(_dr&&typeof _dr==='string'){_di2.value=_dr;inputAttachments=[]}else if(_dr){_di2.value=_dr.text||'';inputAttachments=_dr.attachments||[]}else{_di2.value='';inputAttachments=[]}autoRsz(_di2);renderAttachBar()}const sp=getSavedScroll(id);if(sp!==null)setTimeout(()=>{document.getElementById('msgsC').scrollTop=sp},50);else setTimeout(scrBot,50)}saveSession();updateConvListActive()}
+async function selectConv(id){if(curConvId===id&&curConv)return;if(curConvId){saveSession();const _di=document.getElementById('userIn');const _dt=_di?_di.value:'';const _da=[...inputAttachments];if(_dt||_da.length)convDrafts[curConvId]={text:_dt,attachments:_da};else delete convDrafts[curConvId];if(curConv){saveFoldState();if(_foldDirty){_foldDirty=false;await saveConvF(curConv)}}}fgCreateStart=null;curConv=null;curConvId=id;const lockOk=acquireConvLock(id);curConv=await loadConvFull(id);autoScrollOn=true;foldMgr.reset();if(curConv){touchWorkspace(id,'open');if(!curConv.materialConfig)curConv.materialConfig=defMC();if(!curConv.convParams)curConv.convParams={};if(curConv.foldedMsgIds&&curConv.foldedMsgIds.length){curConv.foldedMsgIds.forEach(id=>foldMgr._folded.add(id))}else{foldMgr.initFold(curConv.messages)}_foldDirty=false;document.getElementById('chTitle').textContent=curConv.name;updateToolbarTitle();renderMsgs();updateMatB();updateTmpB();updateParamB();updateLockB();renderApiSel();updateTokCnt();updateStopBar();updateStreamBtn();updateTagBtn();if(!lockOk)toast('⚠️ 此对话正被另一个窗口编辑，当前只读');const _di2=document.getElementById('userIn');if(_di2){const _dr=convDrafts[id];if(_dr&&typeof _dr==='string'){_di2.value=_dr;inputAttachments=[]}else if(_dr){_di2.value=_dr.text||'';inputAttachments=_dr.attachments||[]}else{_di2.value='';inputAttachments=[]}autoRsz(_di2);renderAttachBar()}const sp=getSavedScroll(id);if(sp!==null)setTimeout(()=>{document.getElementById('msgsC').scrollTop=sp},50);else setTimeout(scrBot,50)}saveSession();updateConvListActive()}
 
 //== renderConvList ==//
 function renderConvList(){const q=document.getElementById('searchConv').value.toLowerCase();const list=curTab==='convs'?convList:trashList;const el=document.getElementById('convList');if(curTab==='trash'){const fl=q?list.filter(c=>c.name.toLowerCase().includes(q)):list;el.innerHTML=fl.length?`<div style="padding:4px;text-align:right"><button class="bbn red" onclick="emptyTrash()">🗑️清空</button></div>${fl.map(c=>`<div class="conv-item"><span class="c-name">${esc(c.name)}</span><button class="c-more" style="display:block" onclick="sp();restoreTrash2('${c.id}')">♻️</button></div>`).join('')}`:'<div style="text-align:center;color:var(--tx-m);padding:20px">空</div>';return}cleanupWorkspace(false);const fl=q?list.filter(c=>c.name.toLowerCase().includes(q)):list;let html='';groups.sort((a,b)=>a.order-b.order).forEach(g=>{const gc=fl.filter(c=>(c.groupId||'_default')===g.id);if(!gc.length&&q)return;const pinned=gc.filter(c=>c.pinned),unpinned=gc.filter(c=>!c.pinned);html+=`<div class="grp-hdr" data-gid="${g.id}" onclick="toggleGrpCol('${g.id}')" style="${g.color?'border-left:3px solid '+g.color:''}"><span class="arr ${g.collapsed?'':'open'}">▶</span><span class="g-nm">${esc(g.name)}</span><span class="g-cnt">(${gc.length})</span><button class="g-more" onclick="sp();showGrpCtx(event.clientX,event.clientY,'${g.id}')">⋯</button></div><div class="grp-body ${g.collapsed?'collapsed':''}">`;const ri=c=>{const hg=pendReqs[c.id]?.some(r=>r.status==='generating');const ws=getWSItem(c.id);const wsIcon=ws?(ws.mode==='manual'?'🔒':ws.mode==='active'?'🔖':'⏱'):'';return`<div class="conv-item ${c.id===curConvId?'active':''}" data-id="${c.id}" draggable="${batchMode||isMobile?'false':'true'}" onclick="${batchMode?`batchTI('${c.id}')`:`selectConv('${c.id}')`}">${batchMode?`<input type="checkbox" class="c-cb" ${batchSel.has(c.id)?'checked':''} onclick="sp();batchTI('${c.id}')">`:''} ${c.pinned?'<span class="pin-i">⭐</span>':''}${ws?`<span class="ws-mark" title="工作台">${wsIcon}</span>`:''}<span class="c-name" ${batchRangeMode&&batchRangeFirst===c.id?'style="outline:2px solid var(--wn);outline-offset:2px;border-radius:var(--r)"':''}>${esc(c.name)}</span>${hg?'<span class="gen-dot"></span>':''}${ws&&!batchMode?`<button class="ws-remove" title="移出工作台" onclick="sp();workspaceRemove('${c.id}')">×</button>`:''}${batchMode?'':`<button class="c-more" onclick="sp();showConvCtx(event.clientX,event.clientY,'${c.id}')">⋯</button>`}</div>`};if(pinned.length&&unpinned.length){const pc=pinnedCollapsed[g.id];html+=`<div class="pin-div" onclick="tglPinCol('${g.id}')" style="cursor:pointer;user-select:none;position:sticky;top:25px;z-index:5;background:var(--bg-s);padding:4px 10px;font-size:12px;margin:0;border-top:1px solid var(--bg-s)">${pc?'▶':'▼'} ⭐ 置顶(${pinned.length})</div>`;if(!pc)pinned.forEach(c=>{html+=ri(c)});html+='<div class="pin-div" data-sep="1">──</div>';unpinned.forEach(c=>{html+=ri(c)})}else gc.forEach(c=>{html+=ri(c)});html+='</div>'});el.innerHTML=html||'<div style="text-align:center;color:var(--tx-m);padding:20px">无对话</div>'}
@@ -2611,7 +2669,7 @@ function renameCurConv(){if(curConvId)renameConv(curConvId)}
 
 //== deleteConv ==//
 async function deleteConv(id){
-if(isWriteBlocked('删除对话'))return;
+
 const ok=await moveToTrash(id);
 if(!ok)return;
 delete convDrafts[id];
@@ -2671,7 +2729,6 @@ return '\uE000'+id+'\uE001'
 if(uiSettings.enableKatex&&window.katex){
 work=work.replace(/\$([^\$\n]{1,200}?)\$/g,function(m,tex){
 if(!tex.trim())return m;
-if(/^\d[\d.,]*$/.test(tex))return m;
 const id=slots.length;
 let html=null;
 html=katexCached(tex,false);
@@ -2797,7 +2854,7 @@ return out
 }
 
 //== renderStreamContent ==//
-function renderStreamContent(bodyEl,rawContent,parseContentTags,msgId){if(!rawContent){bodyEl.style.whiteSpace='';bodyEl.innerHTML='<span class="typing-i"><span></span><span></span><span></span></span>';return}bodyEl.style.whiteSpace='';bodyEl.innerHTML=renderMd(rawContent,parseContentTags,msgId)}
+function renderStreamContent(bodyEl,rawContent,parseContentTags,msgId){if(!rawContent){bodyEl.style.whiteSpace='';bodyEl.innerHTML='<span class="typing-i"><span></span><span></span><span></span></span>';return}bodyEl.style.whiteSpace='';const scrollMap={};bodyEl.querySelectorAll('.rsn-ct.show').forEach(el=>{if(el.id&&el.scrollTop>0)scrollMap[el.id]=el.scrollTop});bodyEl.innerHTML=renderMd(rawContent,parseContentTags,msgId);Object.entries(scrollMap).forEach(([id,top])=>{const el=document.getElementById(id);if(el)el.scrollTop=top})}
 
 //== buildMsgHtml ==//
 function buildMsgHtml(msg,i,genIds,ep){
@@ -3382,6 +3439,7 @@ else{await new Promise((res,rej)=>{img.onload=res;img.onerror=()=>rej(new Error(
 }catch(e){toast('❌ 图片解码失败，可能是不支持的格式');removeSlot();return}
 const ow=img.naturalWidth||img.width,oh=img.naturalHeight||img.height;
 if(!ow||!oh){toast('❌ 图片尺寸异常');removeSlot();return}
+if(oh/ow>3){try{await sliceLongImage(img,ow,oh,file,slotId)}catch(e){toast('❌ 长图切片失败: '+(e.message||e.name));removeSlot()}return}
 const MAX_SIDE=2576;
 const MAX_MP=3750000;
 const JPEG_Q=0.92;
@@ -3455,6 +3513,58 @@ toast('📷 已添加图片'+(needResize?' (已压缩)':''))
 };
 try{reader.readAsDataURL(file)}catch(e){toast('❌ 读取图片失败: '+e.name);removeSlot()}}
 
+//== sliceLongImage ==//
+async function sliceLongImage(img,ow,oh,file,slotId){
+const MAX_SIDE=2560;
+const JPEG_Q=0.92;
+const OVERLAP=0.05;
+const sliceH=ow;
+const ov=Math.round(sliceH*OVERLAP);
+const step=Math.max(1,sliceH-ov);
+const count=Math.max(1,Math.ceil((oh-ov)/step));
+let outW=ow,scale=1;
+if(ow>MAX_SIDE){scale=MAX_SIDE/ow;outW=MAX_SIDE}
+const baseName=(file.name||'image').replace(/\.[^.]+$/,'');
+const slots=[];
+for(let i=0;i<count;i++){
+if(i===0&&slotId){slots.push(slotId)}
+else{const sid=gid2();slots.push(sid);inputAttachments.push({id:sid,type:'image',loading:true,name:baseName+'_p'+(i+1),dataUrl:'',base64:'',mimeType:'image/jpeg',width:0,height:0,size:0})}
+}
+renderAttachBar();
+toast('📑 长图切片中 ('+count+'片)...');
+let failed=0;
+for(let i=0;i<count;i++){
+const sid=slots[i];
+try{
+const sy=i*step;
+let sh=sliceH;
+if(sy+sh>oh)sh=oh-sy;
+if(sh<=0){const idx0=inputAttachments.findIndex(a=>a.id===sid);if(idx0>=0)inputAttachments.splice(idx0,1);continue}
+const ch=Math.max(1,Math.round(sh*scale));
+const canvas=document.createElement('canvas');
+canvas.width=Math.round(outW);canvas.height=ch;
+const ctx2=canvas.getContext('2d');
+if(!ctx2)throw new Error('no canvas ctx');
+ctx2.imageSmoothingEnabled=true;ctx2.imageSmoothingQuality='high';
+ctx2.fillStyle='#fff';ctx2.fillRect(0,0,canvas.width,canvas.height);
+ctx2.drawImage(img,0,sy,ow,sh,0,0,canvas.width,canvas.height);
+const dataUrl=canvas.toDataURL('image/jpeg',JPEG_Q);
+const base64=dataUrl.substring(dataUrl.indexOf(',')+1);
+if(!base64)throw new Error('encode failed');
+const item={id:sid,type:'image',base64,mimeType:'image/jpeg',dataUrl,width:canvas.width,height:canvas.height,name:baseName+'_p'+(i+1),size:Math.round(base64.length*3/4)};
+const idx=inputAttachments.findIndex(a=>a.id===sid);
+if(idx>=0)inputAttachments[idx]=item;else inputAttachments.push(item)
+}catch(e){
+failed++;
+const idx=inputAttachments.findIndex(a=>a.id===sid&&a.loading);
+if(idx>=0)inputAttachments.splice(idx,1)
+}
+if(i%2===0||i===count-1){renderAttachBar();await new Promise(r=>setTimeout(r,0))}
+}
+renderAttachBar();
+updateTokCnt();
+toast(failed?'📑 长图切成 '+(count-failed)+'/'+count+' 片 ('+failed+'失败)':'📑 长图已切成 '+count+' 片')}
+
 //== addImageFromDrop ==//
 function addImageFromDrop(e){
 e.preventDefault();
@@ -3510,6 +3620,84 @@ if(added)toast('✓ 已添加 '+added+' 个文件')
 };
 inp.click()}
 
+//== loadPdfJs ==//
+async function loadPdfJs(){
+if(window.pdfjsLib)return true;
+return new Promise(resolve=>{
+const sc=document.createElement('script');
+sc.src='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js';
+sc.onload=()=>{
+try{if(window.pdfjsLib)window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';resolve(!!window.pdfjsLib)}catch(e){resolve(false)}
+};
+sc.onerror=()=>resolve(false);
+document.head.appendChild(sc)
+})}
+
+//== pickPdf ==//
+function pickPdf(){
+const inp=document.createElement('input');
+inp.type='file';inp.accept='.pdf,application/pdf';
+inp.onchange=async e=>{
+const f=e.target.files[0];
+if(!f)return;
+if(f.type&&f.type!=='application/pdf'&&!f.name.toLowerCase().endsWith('.pdf')){toast('请选择PDF文件');return}
+await extractPdfPages(f)
+};
+inp.click()}
+
+//== extractPdfPages ==//
+async function extractPdfPages(file){
+toast('📕 加载PDF引擎...');
+const okLib=await loadPdfJs();
+if(!okLib){toast('❌ PDF引擎加载失败，请检查网络');return}
+let pdf;
+try{
+const buf=await file.arrayBuffer();
+pdf=await window.pdfjsLib.getDocument({data:buf}).promise
+}catch(e){toast('❌ PDF解析失败: '+((e.message||e.name)||'').substring(0,40));return}
+const total=pdf.numPages;
+const baseName=(file.name||'pdf').replace(/\.pdf$/i,'');
+const slots=[];
+for(let i=1;i<=total;i++){
+const slotId=gid2();
+slots.push(slotId);
+inputAttachments.push({id:slotId,type:'image',loading:true,name:`${baseName}_p${i}`,dataUrl:'',base64:'',mimeType:'image/jpeg',width:0,height:0,size:0})
+}
+renderAttachBar();
+toast(`📕 开始转换 ${total} 页...`);
+const MAX_SIDE=2560;
+let failed=0;
+for(let i=1;i<=total;i++){
+const slotId=slots[i-1];
+try{
+const page=await pdf.getPage(i);
+const vp1=page.getViewport({scale:1});
+let scale=MAX_SIDE/Math.max(vp1.width,vp1.height);
+if(scale>4)scale=4;
+if(scale<1)scale=1;
+const vp=page.getViewport({scale});
+const canvas=document.createElement('canvas');
+canvas.width=Math.round(vp.width);
+canvas.height=Math.round(vp.height);
+const ctx2=canvas.getContext('2d');
+if(!ctx2)throw new Error('no canvas ctx');
+ctx2.fillStyle='#fff';ctx2.fillRect(0,0,canvas.width,canvas.height);
+await page.render({canvasContext:ctx2,viewport:vp}).promise;
+const blob=await new Promise(res=>canvas.toBlob(res,'image/jpeg',0.92));
+if(!blob)throw new Error('canvas导出失败');
+const pageFile=new File([blob],`${baseName}_p${i}.jpg`,{type:'image/jpeg'});
+await addImageAttachment(pageFile,slotId)
+}catch(e){
+failed++;
+const idx=inputAttachments.findIndex(a=>a.id===slotId&&a.loading);
+if(idx>=0)inputAttachments.splice(idx,1)
+}
+if(i%2===0||i===total){renderAttachBar();await new Promise(r=>setTimeout(r,0))}
+}
+renderAttachBar();
+updateTokCnt();
+toast(failed?`✓ PDF已转 ${total-failed}/${total} 页 (${failed}页失败)`:`✓ PDF已转 ${total} 页图片`)}
+
 //== previewMsgImage ==//
 function previewMsgImage(msgIdx,imgIdx){
 const msg=curConv?.messages?.[msgIdx];
@@ -3559,6 +3747,55 @@ const bytes=Math.round(base64Len*3/4);
 if(bytes<1024)return bytes+'B';
 if(bytes<1024*1024)return(bytes/1024).toFixed(1)+'KB';
 return(bytes/1024/1024).toFixed(2)+'MB'}
+
+//== loadJSZip ==//
+async function loadJSZip(){
+if(window.JSZip)return true;
+return new Promise(resolve=>{
+const sc=document.createElement('script');
+sc.src='https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js';
+sc.onload=()=>resolve(!!window.JSZip);
+sc.onerror=()=>resolve(false);
+document.head.appendChild(sc)
+})}
+
+//== exportConvImages ==//
+async function exportConvImages(){
+if(!curConv){toast('请先选择对话');return}
+const imgs=[];
+(curConv.messages||[]).forEach((m,mi)=>{(m.images||[]).forEach(img=>{if(img&&img.base64)imgs.push({img,mi})})});
+if(!imgs.length){toast('当前对话没有图片');return}
+showMo('🖼️ 导出图片',`<div style="text-align:center;padding:20px"><div id="eiStatus">加载打包引擎...</div><div class="prog-bar"><div class="prog-fill" id="eiFill" style="width:5%"></div></div></div>`,'');
+await new Promise(r=>setTimeout(r,30));
+const okLib=await loadJSZip();
+if(!okLib){hideMo();toast('❌ 打包引擎加载失败，请检查网络');return}
+try{
+const zip=new JSZip();
+const usedNames={};
+for(let i=0;i<imgs.length;i++){
+const{img,mi}=imgs[i];
+const ext=(img.mimeType||'image/png').split('/')[1]||'png';
+const base=(img.name||'image').replace(/\.[^.]+$/,'').replace(/[\/\\:*?"<>|]/g,'_');
+let fn=String(i+1).padStart(3,'0')+'_msg'+(mi+1)+'_'+base+'.'+ext;
+if(usedNames[fn]){usedNames[fn]++;fn=fn.replace('.'+ext,'_'+usedNames[fn]+'.'+ext)}else usedNames[fn]=1;
+const bin=atob(img.base64);
+const arr=new Uint8Array(bin.length);
+for(let j=0;j<bin.length;j++)arr[j]=bin.charCodeAt(j);
+zip.file(fn,arr);
+const st=document.getElementById('eiStatus'),f=document.getElementById('eiFill');
+if(st)st.textContent='打包 '+(i+1)+'/'+imgs.length+'...';
+if(f)f.style.width=Math.round((i+1)/imgs.length*70)+'%';
+if(i%5===0)await new Promise(r=>setTimeout(r,0))
+}
+const st2=document.getElementById('eiStatus');if(st2)st2.textContent='生成压缩包...';
+const blob=await zip.generateAsync({type:'blob'},meta=>{const f=document.getElementById('eiFill');if(f)f.style.width=(70+Math.round(meta.percent*0.3))+'%'});
+const safe=(curConv.name||'对话').replace(/[\/\\:*?"<>|]/g,'_').substring(0,40);
+const url=URL.createObjectURL(blob);
+const a=document.createElement('a');
+a.href=url;a.download=safe+'_images_'+fmtD(new Date())+'.zip';a.click();
+setTimeout(()=>URL.revokeObjectURL(url),1000);
+hideMo();ok('已导出 '+imgs.length+' 张图片')
+}catch(e){hideMo();toast('❌ 导出失败: '+(e.message||e.name))}}
 
 //== buildImageContent ==//
 function buildImageContent(msg){
@@ -3643,25 +3880,15 @@ let h='<div style="display:flex;flex-direction:column;gap:8px;padding:10px">';
 h+='<button class="mo-btn sec" onclick="hideMo();pickImageFromCamera()" style="padding:14px;text-align:left">📷 拍照</button>';
 h+='<button class="mo-btn sec" onclick="hideMo();pickImageFile()" style="padding:14px;text-align:left">🖼️ 从相册选图片（可多选）</button>';
 h+='<button class="mo-btn sec" onclick="hideMo();pickFile()" style="padding:14px;text-align:left">📄 上传文件（文本类）</button>';
-h+='<button class="mo-btn sec" onclick="hideMo();addManualAttachment()" style="padding:14px;text-align:left">✏️ 手动输入文本附件</button>';
+h+='<button class="mo-btn sec" onclick="hideMo();pickPdf()" style="padding:14px;text-align:left">📕 上传PDF（按页转图）</button>';
+
 h+='<button class="mo-btn sec" onclick="hideMo();addQuoteAttachment()" style="padding:14px;text-align:left">📋 粘贴为引用</button>';
 if(hasAtt)h+=`<div style="border-top:1px solid var(--bd);padding-top:8px;margin-top:4px;font-size:12px;color:var(--tx-m)">当前 ${inputAttachments.length} 个附件</div>`;
 h+='</div>';
 showMoCompact('📎 添加附件',h,`<button class="mo-btn sec" onclick="hideMo()">取消</button>`)
 }
 
-//== addManualAttachment ==//
-function addManualAttachment(){
-showMo('📎 添加附件',
-`<div class="fg"><label>名称</label><input type="text" id="attNm" placeholder="附件名称"></div><div class="fg"><label>内容</label><textarea id="attCt" rows="8" style="max-height:60vh" placeholder="粘贴或输入内容..."></textarea></div>`,
-`<button class="mo-btn sec" onclick="hideMo()">取消</button><button class="mo-btn pri" onclick="doAddManualAttach()">添加</button>`)}
 
-//== doAddManualAttach ==//
-function doAddManualAttach(){
-const ct=document.getElementById('attCt').value;
-if(!ct.trim()){toast('请输入内容');return}
-const nm=document.getElementById('attNm').value.trim()||undefined;
-addAttachment(ct,nm);hideMo();ok()}
 
 //== addQuoteAttachment ==//
 function addQuoteAttachment(){
@@ -3731,7 +3958,7 @@ btn.style.color=on?'var(--ok)':'var(--tx-m)';
 btn.title=on?'思考标签解析：开启':'思考标签解析：关闭'}
 
 //== saveMsg ==//
-async function saveMsg(){if(isWriteBlocked('保存消息'))return;const inp=document.getElementById('userIn');const c=inp.value.trim();const attachments=[...inputAttachments];const hasAttach=attachments.length>0;if((!c&&!hasAttach)||!curConv)return;if(attachments.some(a=>a.loading)){toast('⏳ 图片加载中，请稍候');return}const startIdx=curConv.messages.length;
+async function saveMsg(){const inp=document.getElementById('userIn');const c=inp.value.trim();const attachments=[...inputAttachments];const hasAttach=attachments.length>0;if((!c&&!hasAttach)||!curConv)return;if(attachments.some(a=>a.loading)){toast('⏳ 图片加载中，请稍候');return}const startIdx=curConv.messages.length;
 attachments.forEach(a=>{
 if(a.type==='image'){
 curConv.messages.push({id:gid2(),role:'user',content:'[图片: '+a.name+']',images:[{base64:a.base64,mimeType:a.mimeType,width:a.width,height:a.height,name:a.name}],timestamp:new Date().toISOString()})
@@ -3742,7 +3969,7 @@ if(c)curConv.messages.push({id:gid2(),role:'user',content:c,timestamp:new Date()
 inp.value='';inp.style.height='auto';delete convDrafts[curConvId];inputAttachments=[];renderAttachBar();appendMsgs(startIdx);scrBot();updateTokCnt();await saveConvF(curConv);renderConvList();toast('✓ 已保存')}
 
 //== sendMsg ==//
-async function sendMsg(){if(isWriteBlocked('发送消息'))return;const inp=document.getElementById('userIn');const c=inp.value.trim();const attachments=[...inputAttachments];const hasAttach=attachments.length>0;if((!c&&!hasAttach)||!curConv)return;if(attachments.some(a=>a.loading)){toast('⏳ 图片加载中，请稍候');return}const{apiId:_aid,model:_mdl}=getActiveModel(curConv);if(!_aid||!_mdl){toast('请选择API和模型');return}const _ep2=getEffectiveParams(curConv);const _pi2=new Set((pendReqs[curConvId]||[]).filter(r=>r.status==='generating').map(r=>r.msgId));const _fin2=attachments.filter(a=>a.type!=='image').map(a=>a.content).join('\n')+(c?'\n'+c:'');const _pk2=calcApiPack(curConv,curConv.messages,_ep2,{includeInput:true,inputText:_fin2,excludeIds:_pi2});if(!checkCostBeforeSend(_aid,_mdl,_pk2.totalTok))return;const startIdx=curConv.messages.length;
+async function sendMsg(){await checkMatFresh();if(!isConvWritable(curConvId)){toast('⚠️ 此对话正被另一个窗口编辑');return}const inp=document.getElementById('userIn');const c=inp.value.trim();const attachments=[...inputAttachments];const hasAttach=attachments.length>0;if((!c&&!hasAttach)||!curConv)return;if(attachments.some(a=>a.loading)){toast('⏳ 图片加载中，请稍候');return}const{apiId:_aid,model:_mdl}=getActiveModel(curConv);if(!_aid||!_mdl){toast('请选择API和模型');return}const _ep2=getEffectiveParams(curConv);const _pi2=new Set((pendReqs[curConvId]||[]).filter(r=>r.status==='generating').map(r=>r.msgId));const _fin2=attachments.filter(a=>a.type!=='image').map(a=>a.content).join('\n')+(c?'\n'+c:'');const _pk2=calcApiPack(curConv,curConv.messages,_ep2,{includeInput:true,inputText:_fin2,excludeIds:_pi2});if(!checkCostBeforeSend(_aid,_mdl,_pk2.totalTok))return;const startIdx=curConv.messages.length;
 attachments.forEach(a=>{
 if(a.type==='image'){
 curConv.messages.push({id:gid2(),role:'user',content:'[图片: '+a.name+']',images:[{base64:a.base64,mimeType:a.mimeType,width:a.width,height:a.height,name:a.name}],timestamp:new Date().toISOString()})
@@ -3752,7 +3979,7 @@ curConv.messages.push({id:gid2(),role:'user',content:a.content,timestamp:new Dat
 if(c)curConv.messages.push({id:gid2(),role:'user',content:c,timestamp:new Date().toISOString()});curConv.updatedAt=new Date().toISOString();touchWorkspace(curConvId,'use');if(curConv.name==='新对话'){const ns=c||(attachments[0]?.name||'');curConv.name=ns.substring(0,25)+(ns.length>25?'...':'');curConv._pendingAutoName=true;document.getElementById('chTitle').textContent=curConv.name;updateToolbarTitle()}inp.value='';inp.style.height='auto';delete convDrafts[curConvId];inputAttachments=[];renderAttachBar();const cfg=apiConfigs.find(c2=>c2.id===_aid);const ai={id:gid2(),role:'assistant',content:'',timestamp:new Date().toISOString(),model:_mdl,apiName:cfg?.name||''};curConv.messages.push(ai);curConv.updatedAt=new Date().toISOString();appendMsgs(startIdx);scrBot();startReq(curConvId,curConv.messages.length-2,ai.id,_aid,_mdl);await saveConvF(curConv);renderConvList()}
 
 //== sendUpTo ==//
-async function sendUpTo(i){if(isWriteBlocked('从此发送'))return;if(!curConv){toast('请先选择对话');return}const{apiId:_aid,model:_mdl}=getActiveModel(curConv);if(!_aid||!_mdl){toast('请选择API和模型');return}const _ep2=getEffectiveParams(curConv);const _pk2=calcApiPack(curConv,curConv.messages.slice(0,i+1),_ep2);if(!checkCostBeforeSend(_aid,_mdl,_pk2.totalTok))return;touchWorkspace(curConvId,'use');const cfg=apiConfigs.find(c2=>c2.id===_aid);const ai={id:gid2(),role:'assistant',content:'',timestamp:new Date().toISOString(),model:_mdl,apiName:cfg?.name||''};curConv.messages.splice(i+1,0,ai);curConv.updatedAt=new Date().toISOString();insertMsgDOM(i+1);startReq(curConvId,i,ai.id,_aid,_mdl);await saveConvF(curConv)}
+async function sendUpTo(i){await checkMatFresh();if(!isConvWritable(curConvId)){toast('⚠️ 此对话正被另一个窗口编辑');return}if(!curConv){toast('请先选择对话');return}const{apiId:_aid,model:_mdl}=getActiveModel(curConv);if(!_aid||!_mdl){toast('请选择API和模型');return}const _ep2=getEffectiveParams(curConv);const _pk2=calcApiPack(curConv,curConv.messages.slice(0,i+1),_ep2);if(!checkCostBeforeSend(_aid,_mdl,_pk2.totalTok))return;touchWorkspace(curConvId,'use');const cfg=apiConfigs.find(c2=>c2.id===_aid);const ai={id:gid2(),role:'assistant',content:'',timestamp:new Date().toISOString(),model:_mdl,apiName:cfg?.name||''};curConv.messages.splice(i+1,0,ai);curConv.updatedAt=new Date().toISOString();insertMsgDOM(i+1);startReq(curConvId,i,ai.id,_aid,_mdl);await saveConvF(curConv)}
 
 //== startReq ==//
 function startReq(cid,ci,mid,apiId,model){if(!pendReqs[cid])pendReqs[cid]=[];const req={id:gid2(),msgId:mid,ctxIdx:ci,abort:new AbortController(),status:'generating',content:'',reasoning:'',startTime:Date.now(),charCount:0,reasoningStart:null,reasoningEnd:null,firstTokenTime:null,model:model||curModel,apiId:apiId||curApiId};pendReqs[cid].push(req);lastStreamSaveLen[mid]=0;updatePendB();updateStopBar();updateConvListActive();execReq(cid,req)}
@@ -4284,7 +4511,7 @@ setTimeout(()=>{const msg=curConv.messages[idx];if(msg&&foldMgr.isFolded(msg.id)
 function updateMatB(){const b=document.getElementById('matB');if(!b)return;if(!curConv){b.textContent='📋';b.classList.add('empty');return}const ep=getEffectiveParams(curConv);const pi=new Set((pendReqs[curConvId]||[]).filter(r=>r.status==='generating').map(r=>r.msgId));const pack=calcApiPack(curConv,curConv.messages,ep,{excludeIds:pi});b.textContent=pack.matTok>0?'📚':'📋';b.classList.toggle('empty',pack.matTok<=0)}
 
 //== showMatPanel ==//
-function showMatPanel(){if(!curConv){toast('请先选择对话');return}const cfg=curConv.materialConfig||defMC();const srcFile=materials._sourceFile||'';const srcTime=materials._importedAt?new Date(materials._importedAt).toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}):'';const srcInfo=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:6px 10px;background:var(--bg-t);border-radius:var(--r);flex-wrap:wrap"><span style="flex:1;font-size:11px;color:var(--tx-m);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${srcFile?'📁 '+esc(srcFile)+(srcTime?' ('+srcTime+')':''):'📁 未导入素材'}</span><button class="bbn" onclick="hideMo();switchMode('mat')">✏️ 编辑素材</button></div>`;const amo=materials.metaOrder;let mH='';if(!amo.length)mH+='<div style="color:var(--tx-m);padding:8px;text-align:center;font-size:12px">无</div>';else mH+='<div class="meta-list">'+amo.map(n=>`<div class="meta-it ${cfg.metaPrompts?.[n]?'checked':''}" data-name="${escA(n)}"><span class="m-nm" onclick="tglMD(this.parentElement,'${escA(n)}')">${esc(n)}</span><div class="m-acts" onclick="sp()"><button class="ma-b" onclick="pvMeta('${escA(n)}')">👁</button><button class="ma-b" onclick="moStack=[];matJumpToEdit('meta','${escA(n)}')">✏️</button></div></div>`).join('')+'</div>';const hChars=materials.charOrder.filter(n=>materials.chars[n]?.h?.trim());let cH='';if(materials.charOrder.length){let charRangeInfo='';if(charRangeMode){const stL={spotlight:'⭐',appear:'出场',mention:'提及',absent:'不出',hidden:'屏蔽'};charRangeInfo=`<div style="padding:8px 12px;background:rgba(251,191,36,.15);border:1px solid var(--mark-bg);border-radius:var(--r);margin-bottom:6px;font-size:12px;color:var(--wn);display:flex;align-items:center;gap:6px"><span>区间: 设为${stL[charRangeSt]||charRangeSt}</span><span>${charRangeFirst!==null?'· 起点#'+(charRangeFirst+1)+' 点终点':'· 点起始角色'}</span><button class="bbn" onclick="cancelCharRange()" style="margin-left:auto">✕取消</button></div>`}cH=charRangeInfo+`<div class="char-list">${materials.charOrder.map((n,i)=>{const c=materials.chars[n],st=getCSt(cfg,n),hasH=c.h&&c.h.trim();const isRF=charRangeMode&&charRangeFirst===i;return`<div class="ch-row ${st==='hidden'?'hid':''}" data-name="${escA(n)}" ${isRF?'style="outline:2px solid var(--wn);outline-offset:1px"':''} onclick="if(charRangeMode){onCharRangeClick(${i});return}"><span class="ci">#${i+1}</span><span class="cn" onclick="sp();if(!charRangeMode)pvChar('${escA(n)}')">${c.protagonist?'👑':''}${esc(n)}</span><div class="sb3"><button data-st="spotlight" class="${st==='spotlight'?'spotlight':''}" onclick="sp();if(!charRangeMode)setCS('${escA(n)}','spotlight',this)">⭐</button><button data-st="appear" class="${st==='appear'?'active':''}" onclick="sp();if(!charRangeMode)setCS('${escA(n)}','appear',this)">出场</button><button data-st="mention" class="${st==='mention'?'active':''}" onclick="sp();if(!charRangeMode)setCS('${escA(n)}','mention',this)">提及</button><button data-st="absent" class="${st==='absent'?'active':''}" onclick="sp();if(!charRangeMode)setCS('${escA(n)}','absent',this)">不出</button><button data-st="hidden" class="${st==='hidden'?'active':''}" onclick="sp();if(!charRangeMode)setCS('${escA(n)}','hidden',this)">屏蔽</button></div>${hasH?`<label class="htgl" onclick="sp()"><input type="checkbox" ${cfg.hToggles?.[n]?'checked':''} onchange="if(!charRangeMode)tglH('${escA(n)}',this.checked)">🔞</label>`:''}</div>`}).join('')}</div>`}let aH='';if(materials.appOrder.length){const used=new Set();materials.groupOrder.forEach(gn=>{const ms=(materials.appGroups[gn]||[]).filter(a=>materials.appOrder.includes(a));if(!ms.length)return;ms.forEach(a=>used.add(a));aH+=`<div class="app-grp-h">📁 ${esc(gn)}</div><div class="app-wrap">${ms.map(a=>`<div class="app-chip ${cfg.apps?.[a]?'checked':''}" data-name="${escA(a)}" onclick="tglApp('${escA(a)}')"><span>${esc(a)}</span><span class="pv-i" onclick="sp();pvApp('${escA(a)}')">[看]</span></div>`).join('')}</div>`});const ug=materials.appOrder.filter(a=>!used.has(a));if(ug.length)aH+=`<div class="app-grp-h">📄 未分组</div><div class="app-wrap">${ug.map(a=>`<div class="app-chip ${cfg.apps?.[a]?'checked':''}" data-name="${escA(a)}" onclick="tglApp('${escA(a)}')"><span>${esc(a)}</span><span class="pv-i" onclick="sp();pvApp('${escA(a)}')">[看]</span></div>`).join('')}</div>`}let tlH='';if(tlPointsChat.length){const cutIdx=cfg.timelineCutoffIdx;const sliderVal=cutIdx!==null&&cutIdx!==undefined?cutIdx:tlPointsChat.length;const posText=sliderVal>=tlPointsChat.length?'不限制':tlPointsChat[sliderVal]?`截止「${tlPointsChat[sliderVal].label}」之前`:'不限制';const filteredCount=storyData.stories.filter(s=>isStoryBeforeCut(s,cutIdx)&&getStoryOut(s,cfg)!=='skip').length;const years=(storyData.timelineYears||[]).sort((a,b)=>a.order-b.order);tlH=`<div class="tl-box"><div class="tl-hdr"><span style="font-size:13px;font-weight:600">📅 剧情截止</span><span class="tl-pos" id="tlPos">${esc(posText)}</span><button class="bbn" onclick="resetTLCut()">🔄</button></div><input type="range" class="tl-slider" id="tlSlider" min="0" max="${tlPointsChat.length}" value="${sliderVal}" oninput="onTLSlide(this.value)"><div class="tl-marks">${years.map(y=>`<span>${esc(y.name)}</span>`).join('')}</div><div class="tl-info">输出 <strong id="tlCount">${filteredCount}</strong> 篇</div></div>`}const tok=cntTok(genMatFull(cfg));showMoFull('📋 素材配置',`${srcInfo}<div class="ms"><div class="ms-t">🎯 元提示词<div class="bb"><button class="bbn ind" onclick="setAllMeta(true)">全选</button><button class="bbn" onclick="setAllMeta(false)">取消</button></div></div>${mH}</div><div class="ms"><div class="ms-t">👥 角色<div class="bb"><button class="bbn gold" onclick="setAllChars('spotlight')">全⭐</button><button class="bbn grn" onclick="setAllChars('appear')">全出</button><button class="bbn org" onclick="setAllChars('mention')">全提</button><button class="bbn" onclick="setAllChars('absent')">全不出</button><button class="bbn red" onclick="setAllChars('hidden')">全屏蔽</button><button class="bbn ${charRangeMode?'org':''}" onclick="charRangeSet()">${charRangeMode?'取消区间':'区间'}</button>${hChars.length?`<button class="bbn pink" onclick="setAllH(true)">全🔞</button><button class="bbn" onclick="setAllH(false)">取消🔞</button>`:''}</div></div>${cH}</div><div class="ms"><div class="ms-t">📚 附录<div class="bb"><button class="bbn" onclick="setAllApps(true)">全选</button><button class="bbn" onclick="setAllApps(false)">取消</button></div></div>${aH||'<div style="color:var(--tx-m);padding:8px;text-align:center;font-size:12px">无</div>'}</div><div class="tgl-row"><label><input type="checkbox" ${cfg.hideRel?'checked':''} onchange="tglOpt('hideRel',this.checked)">🚫隐藏关系</label><label><input type="checkbox" ${cfg.hideStory?'checked':''} onchange="tglOpt('hideStory',this.checked)">🚫隐藏剧情</label><label><input type="checkbox" ${cfg.worldBook?'checked':''} onchange="tglOpt('worldBook',this.checked)">📖世界书</label></div>${tlH}<div class="mat-ftr"><span class="stats">~<strong id="matTok">${tok.toLocaleString()}</strong> tok</span><button class="mo-btn sec" onclick="pvMat()">👁️预览</button><button class="mo-btn sec" onclick="cpMat()">📋复制</button><button class="mo-btn sec" onclick="exportMatTxt()">📤导出</button></div>`,`<button class="mo-btn sec" onclick="hideMo()">关闭</button><button class="mo-btn pri" onclick="saveMatCfg()">💾保存</button>`)}
+async function showMatPanel(){if(!curConv){toast('请先选择对话');return}await checkMatFresh();const cfg=curConv.materialConfig||defMC();const srcFile=materials._sourceFile||'';const srcTime=materials._importedAt?new Date(materials._importedAt).toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}):'';const srcInfo=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:6px 10px;background:var(--bg-t);border-radius:var(--r);flex-wrap:wrap"><span style="flex:1;font-size:11px;color:var(--tx-m);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${srcFile?'📁 '+esc(srcFile)+(srcTime?' ('+srcTime+')':''):'📁 未导入素材'}</span><button class="bbn" onclick="hideMo();switchMode('mat')">✏️ 编辑素材</button></div>`;const amo=materials.metaOrder;let mH='';if(!amo.length)mH+='<div style="color:var(--tx-m);padding:8px;text-align:center;font-size:12px">无</div>';else mH+='<div class="meta-list">'+amo.map(n=>`<div class="meta-it ${cfg.metaPrompts?.[n]?'checked':''}" data-name="${escA(n)}"><span class="m-nm" onclick="tglMD(this.parentElement,'${escA(n)}')">${esc(n)}</span><div class="m-acts" onclick="sp()"><button class="ma-b" onclick="pvMeta('${escA(n)}')">👁</button><button class="ma-b" onclick="moStack=[];matJumpToEdit('meta','${escA(n)}')">✏️</button></div></div>`).join('')+'</div>';const hChars=materials.charOrder.filter(n=>materials.chars[n]?.h?.trim());let cH='';if(materials.charOrder.length){let charRangeInfo='';if(charRangeMode){const stL={spotlight:'⭐',appear:'出场',mention:'提及',absent:'不出',hidden:'屏蔽'};charRangeInfo=`<div style="padding:8px 12px;background:rgba(251,191,36,.15);border:1px solid var(--mark-bg);border-radius:var(--r);margin-bottom:6px;font-size:12px;color:var(--wn);display:flex;align-items:center;gap:6px"><span>区间: 设为${stL[charRangeSt]||charRangeSt}</span><span>${charRangeFirst!==null?'· 起点#'+(charRangeFirst+1)+' 点终点':'· 点起始角色'}</span><button class="bbn" onclick="cancelCharRange()" style="margin-left:auto">✕取消</button></div>`}cH=charRangeInfo+`<div class="char-list">${materials.charOrder.map((n,i)=>{const c=materials.chars[n],st=getCSt(cfg,n),hasH=c.h&&c.h.trim();const isRF=charRangeMode&&charRangeFirst===i;return`<div class="ch-row ${st==='hidden'?'hid':''}" data-name="${escA(n)}" ${isRF?'style="outline:2px solid var(--wn);outline-offset:1px"':''} onclick="if(charRangeMode){onCharRangeClick(${i});return}"><span class="ci">#${i+1}</span><span class="cn" onclick="sp();if(!charRangeMode)pvChar('${escA(n)}')">${c.protagonist?'👑':''}${esc(n)}</span><div class="sb3"><button data-st="spotlight" class="${st==='spotlight'?'spotlight':''}" onclick="sp();if(!charRangeMode)setCS('${escA(n)}','spotlight',this)">⭐</button><button data-st="appear" class="${st==='appear'?'active':''}" onclick="sp();if(!charRangeMode)setCS('${escA(n)}','appear',this)">出场</button><button data-st="mention" class="${st==='mention'?'active':''}" onclick="sp();if(!charRangeMode)setCS('${escA(n)}','mention',this)">提及</button><button data-st="absent" class="${st==='absent'?'active':''}" onclick="sp();if(!charRangeMode)setCS('${escA(n)}','absent',this)">不出</button><button data-st="hidden" class="${st==='hidden'?'active':''}" onclick="sp();if(!charRangeMode)setCS('${escA(n)}','hidden',this)">屏蔽</button></div>${hasH?`<label class="htgl" onclick="sp()"><input type="checkbox" ${cfg.hToggles?.[n]?'checked':''} onchange="if(!charRangeMode)tglH('${escA(n)}',this.checked)">🔞</label>`:''}</div>`}).join('')}</div>`}let aH='';if(materials.appOrder.length){const used=new Set();materials.groupOrder.forEach(gn=>{const ms=(materials.appGroups[gn]||[]).filter(a=>materials.appOrder.includes(a));if(!ms.length)return;ms.forEach(a=>used.add(a));aH+=`<div class="app-grp-h">📁 ${esc(gn)}</div><div class="app-wrap">${ms.map(a=>`<div class="app-chip ${cfg.apps?.[a]?'checked':''}" data-name="${escA(a)}" onclick="tglApp('${escA(a)}')"><span>${esc(a)}</span><span class="pv-i" onclick="sp();pvApp('${escA(a)}')">[看]</span></div>`).join('')}</div>`});const ug=materials.appOrder.filter(a=>!used.has(a));if(ug.length)aH+=`<div class="app-grp-h">📄 未分组</div><div class="app-wrap">${ug.map(a=>`<div class="app-chip ${cfg.apps?.[a]?'checked':''}" data-name="${escA(a)}" onclick="tglApp('${escA(a)}')"><span>${esc(a)}</span><span class="pv-i" onclick="sp();pvApp('${escA(a)}')">[看]</span></div>`).join('')}</div>`}let tlH='';if(tlPointsChat.length){const cutIdx=cfg.timelineCutoffIdx;const sliderVal=cutIdx!==null&&cutIdx!==undefined?cutIdx:tlPointsChat.length;const posText=sliderVal>=tlPointsChat.length?'不限制':tlPointsChat[sliderVal]?`截止「${tlPointsChat[sliderVal].label}」之前`:'不限制';const filteredCount=storyData.stories.filter(s=>isStoryBeforeCut(s,cutIdx)&&getStoryOut(s,cfg)!=='skip').length;const years=(storyData.timelineYears||[]).sort((a,b)=>a.order-b.order);tlH=`<div class="tl-box"><div class="tl-hdr"><span style="font-size:13px;font-weight:600">📅 剧情截止</span><span class="tl-pos" id="tlPos">${esc(posText)}</span><button class="bbn" onclick="resetTLCut()">🔄</button></div><input type="range" class="tl-slider" id="tlSlider" min="0" max="${tlPointsChat.length}" value="${sliderVal}" oninput="onTLSlide(this.value)"><div class="tl-marks">${years.map(y=>`<span>${esc(y.name)}</span>`).join('')}</div><div class="tl-info">输出 <strong id="tlCount">${filteredCount}</strong> 篇</div></div>`}const tok=cntTok(genMatFull(cfg));showMoFull('📋 素材配置',`${srcInfo}<div class="ms"><div class="ms-t">🎯 元提示词<div class="bb"><button class="bbn ind" onclick="setAllMeta(true)">全选</button><button class="bbn" onclick="setAllMeta(false)">取消</button></div></div>${mH}</div><div class="ms"><div class="ms-t">👥 角色<div class="bb"><button class="bbn gold" onclick="setAllChars('spotlight')">全⭐</button><button class="bbn grn" onclick="setAllChars('appear')">全出</button><button class="bbn org" onclick="setAllChars('mention')">全提</button><button class="bbn" onclick="setAllChars('absent')">全不出</button><button class="bbn red" onclick="setAllChars('hidden')">全屏蔽</button><button class="bbn ${charRangeMode?'org':''}" onclick="charRangeSet()">${charRangeMode?'取消区间':'区间'}</button>${hChars.length?`<button class="bbn pink" onclick="setAllH(true)">全🔞</button><button class="bbn" onclick="setAllH(false)">取消🔞</button>`:''}</div></div>${cH}</div><div class="ms"><div class="ms-t">📚 附录<div class="bb"><button class="bbn" onclick="setAllApps(true)">全选</button><button class="bbn" onclick="setAllApps(false)">取消</button></div></div>${aH||'<div style="color:var(--tx-m);padding:8px;text-align:center;font-size:12px">无</div>'}</div><div class="tgl-row"><label><input type="checkbox" ${cfg.hideRel?'checked':''} onchange="tglOpt('hideRel',this.checked)">🚫隐藏关系</label><label><input type="checkbox" ${cfg.hideStory?'checked':''} onchange="tglOpt('hideStory',this.checked)">🚫隐藏剧情</label><label><input type="checkbox" ${cfg.worldBook?'checked':''} onchange="tglOpt('worldBook',this.checked)">📖世界书</label></div>${tlH}<div class="mat-ftr"><span class="stats">~<strong id="matTok">${tok.toLocaleString()}</strong> tok</span><button class="mo-btn sec" onclick="pvMat()">👁️预览</button><button class="mo-btn sec" onclick="cpMat()">📋复制</button><button class="mo-btn sec" onclick="exportMatTxt()">📤导出</button></div>`,`<button class="mo-btn sec" onclick="hideMo()">关闭</button><button class="mo-btn pri" onclick="saveMatCfg()">💾保存</button>`)}
 
 //== onTLSlide ==//
 function onTLSlide(val){if(!curConv)return;val=parseInt(val);curConv.materialConfig.timelineCutoffIdx=val>=tlPointsChat.length?null:val;const posText=val>=tlPointsChat.length?'不限制':tlPointsChat[val]?`截止「${tlPointsChat[val].label}」之前`:'不限制';const pe=document.getElementById('tlPos');if(pe)pe.textContent=posText;const cfg=curConv.materialConfig;const cnt=storyData.stories.filter(s=>isStoryBeforeCut(s,cfg.timelineCutoffIdx)&&getStoryOut(s,cfg)!=='skip').length;const ce=document.getElementById('tlCount');if(ce)ce.textContent=cnt;updMT()}
@@ -4541,7 +4768,7 @@ toast('❌ 选择包导出失败: '+(e.message||e.name))
 }}
 
 //== showImport ==//
-function showImport(){if(isWriteBlocked('导入对话'))return;if(importLock){toast('导入进行中');return}const inp=document.createElement('input');inp.type='file';inp.accept='.json,.txt';inp.onchange=async e=>{const f=e.target.files[0];if(!f)return;if(!folderH){toast('请先选择文件夹');return}const sizeMB=(f.size/1024/1024).toFixed(1);showMo('📥 读取文件',`<div style="text-align:center;padding:20px"><div style="font-size:14px;margin-bottom:10px" id="impReadStatus">正在读取 ${esc(f.name)} (${sizeMB}MB)...</div><div class="prog-bar"><div class="prog-fill" id="impReadProg" style="width:10%"></div></div><div class="prog-text" id="impReadText">读取文件中</div></div>`,'');await new Promise(r=>setTimeout(r,30));try{const rs=document.getElementById('impReadStatus');const rp=document.getElementById('impReadProg');const rt=document.getElementById('impReadText');if(rt)rt.textContent='读取文件内容...';const text=await f.text();if(rp)rp.style.width='40%';if(rt)rt.textContent='解析JSON ('+sizeMB+'MB)...';await new Promise(r=>setTimeout(r,10));const data=JSON.parse(text);if(rp)rp.style.width='60%';if(rt)rt.textContent='分析导入内容...';await new Promise(r=>setTimeout(r,10));await analyzeImport(data)}catch(err){hideMo();const msg=(err&&err.message||String(err)).substring(0,120);if(msg.includes('not be found')||msg.includes('NotFound'))toast('❌ 文件读取失败，请重试或重新选择文件夹: '+msg);else if(msg.includes('JSON')||msg.includes('Unexpected'))toast('❌ 文件格式错误: '+msg);else toast('❌ 导入失败: '+msg)}};inp.click()}
+function showImport(){if(importLock){toast('导入进行中');return}const inp=document.createElement('input');inp.type='file';inp.accept='.json,.txt';inp.onchange=async e=>{const f=e.target.files[0];if(!f)return;if(!folderH){toast('请先选择文件夹');return}const sizeMB=(f.size/1024/1024).toFixed(1);showMo('📥 读取文件',`<div style="text-align:center;padding:20px"><div style="font-size:14px;margin-bottom:10px" id="impReadStatus">正在读取 ${esc(f.name)} (${sizeMB}MB)...</div><div class="prog-bar"><div class="prog-fill" id="impReadProg" style="width:10%"></div></div><div class="prog-text" id="impReadText">读取文件中</div></div>`,'');await new Promise(r=>setTimeout(r,30));try{const rs=document.getElementById('impReadStatus');const rp=document.getElementById('impReadProg');const rt=document.getElementById('impReadText');if(rt)rt.textContent='读取文件内容...';const text=await f.text();if(rp)rp.style.width='40%';if(rt)rt.textContent='解析JSON ('+sizeMB+'MB)...';await new Promise(r=>setTimeout(r,10));const data=JSON.parse(text);if(rp)rp.style.width='60%';if(rt)rt.textContent='分析导入内容...';await new Promise(r=>setTimeout(r,10));await analyzeImport(data)}catch(err){hideMo();const msg=(err&&err.message||String(err)).substring(0,120);if(msg.includes('not be found')||msg.includes('NotFound'))toast('❌ 文件读取失败，请重试或重新选择文件夹: '+msg);else if(msg.includes('JSON')||msg.includes('Unexpected'))toast('❌ 文件格式错误: '+msg);else toast('❌ 导入失败: '+msg)}};inp.click()}
 
 //== parseChatboxApi ==//
 function parseChatboxApi(data){const apis=[];const providers=data.settings?.providers;const customProviders=data.settings?.customProviders;if(providers&&typeof providers==='object'){const nameMap={};(Array.isArray(customProviders)?customProviders:[]).forEach(cp=>{if(cp.id&&cp.name)nameMap[cp.id]=cp.name});Object.entries(providers).forEach(([pid,pdata])=>{if(pid==='chatbox-ai')return;if(!pdata.apiKey&&!pdata.apiHost)return;const displayName=nameMap[pid]||pid;const models=(pdata.models||[]).map(m=>typeof m==='string'?m:m.modelId).filter(m=>m);let host=(pdata.apiHost||'').trim().replace(/\/+$/,'');apis.push({id:gid2(),name:displayName,url:host,key:pdata.apiKey||'',models:models})})}if(!apis.length){if(data.openaiApiKey||data['openai.apiKey']){const key=data.openaiApiKey||data['openai.apiKey']||'';const host=data.openaiApiHost||data['openai.apiHost']||'https://api.openai.com';const model=data.openaiModel||data['openai.model']||'';if(key)apis.push({id:gid2(),name:'OpenAI',url:host,key:key,models:model?[model]:[]})}}return apis}
@@ -4618,7 +4845,7 @@ scheduleIndexSave()
 
 //== execImport ==//
 async function execImport(){
-if(isWriteBlocked('执行导入'))return;
+
 if(importLock)return;
 importLock=true;
 const execBtn=document.getElementById('impExecBtn'),cancelBtn=document.getElementById('impCancelBtn');
@@ -4737,7 +4964,7 @@ function recordCostLog(cid,req){const conv=cid===curConvId&&curConv?curConv:null
 async function saveCostLogs(){
 const merged=mergeCostLogs([],costLogs);
 costLogs=merged.items.slice(0,50000);
-if(isWriteBlocked('费用日志保存')){try{localStorage.setItem('costLogs',JSON.stringify(costLogs.slice(0,10000)))}catch(e){}return}
+
 try{localStorage.setItem('costLogs',JSON.stringify(costLogs.slice(0,10000)))}catch(e){}
 if(folderH){try{const f=await folderH.getFileHandle('cost_logs.json',{create:true});const w=await f.createWritable();await w.write(JSON.stringify({version:1,savedAt:new Date().toISOString(),items:costLogs}));await w.close()}catch(e){}}
 }
@@ -4996,14 +5223,14 @@ editState.appGrpCollapsed={};editState.charTabs={};
 renderMatApp();renderMatEditMode()}
 
 //== matImportTxt ==//
-function matImportTxt(){if(isWriteBlocked('素材编辑导入'))return;const inp=document.createElement('input');inp.type='file';inp.accept='.txt';inp.onchange=async e=>{const f=e.target.files[0];if(!f)return;parseMat(await f.text());materials._sourceFile=f.name;materials._importedAt=new Date().toISOString();await saveMats();renderMatEditMode();const pi=document.getElementById('matProjectInfo');if(pi)pi.textContent='导入: '+f.name;toast('✓ 已导入: '+f.name)};inp.click()}
+function matImportTxt(){const inp=document.createElement('input');inp.type='file';inp.accept='.txt';inp.onchange=async e=>{const f=e.target.files[0];if(!f)return;parseMat(await f.text());materials._sourceFile=f.name;materials._importedAt=new Date().toISOString();await saveMats();renderMatEditMode();const pi=document.getElementById('matProjectInfo');if(pi)pi.textContent='导入: '+f.name;toast('✓ 已导入: '+f.name)};inp.click()}
 
 //== matExportFile ==//
 function matExportFile(){try{const name=document.getElementById('matExportName')?.value?.trim()||'角色数据';const txt=buildTxt();if(!txt){toast('❌ 导出内容为空');return}dl(name+'.txt',txt,'text/plain');toast('✓ 已导出')}catch(e){toast('❌ 导出失败: '+e.message)}}
 
 //== matSaveVersion ==//
 async function matSaveVersion(){
-if(isWriteBlocked('素材版本保存'))return;
+
 if(!folderH){toast('请先连接文件夹');return}
 if(!materials._projectName){matNewProject();return}
 const ver=(materials._projectVersion||0)+1;
@@ -5032,7 +5259,7 @@ ok(`已保存 ${fileName}`)
 
 //== matNewProject ==//
 function matNewProject(){
-if(isWriteBlocked('新建素材企划'))return;
+
 const name=prompt('新企划名称：');
 if(!name?.trim())return;
 materials._projectName=name.trim();
@@ -5067,7 +5294,7 @@ showMo('📚 素材方案',html,`<button class="mo-btn sec" onclick="hideMo()">�
 
 //== matSwitchProject ==//
 async function matSwitchProject(pName){
-if(isWriteBlocked('切换素材企划'))return;
+
 if(!folderH)return;
 try{
 const vd=await folderH.getDirectoryHandle('mat_versions');
@@ -5092,7 +5319,7 @@ toast('✓ 切换到 '+pName)
 
 //== matLoadVersion ==//
 async function matLoadVersion(pName,vIdx){
-if(isWriteBlocked('导入素材版本'))return;
+
 if(!folderH)return;
 try{
 const vd=await folderH.getDirectoryHandle('mat_versions');
@@ -5115,7 +5342,7 @@ toast('✓ 已导入 '+v.file)
 
 //== matSaveAllEdits ==//
 function matSaveAllEdits(){
-if(isWriteBlocked('素材编辑保存'))return;
+
 materials.charOrder.forEach((cn,ci)=>{
 const c=materials.chars[cn];
 const fields=[{id:'cd_'+ci,key:'d',label:'详细人设'},{id:'cs_'+ci,key:'s',label:'简要人设'},{id:'ch_'+ci,key:'h',label:'H人设'}];
